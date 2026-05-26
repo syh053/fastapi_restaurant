@@ -1,0 +1,19 @@
+import sys
+from pathlib import Path
+from typing import AsyncGenerator
+
+from configuration import Configuration
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+
+top_dir = Path(sys.prefix).resolve().parent
+
+sys.path.append(str(top_dir))
+db_config = Configuration(top_dir / "sys.ini")
+
+async_engine = create_async_engine(db_config["DATABASE"]["sqlalchemy.url"], echo=True)
+AsyncSessionLocal = async_sessionmaker(async_engine, expire_on_commit=False, autoflush=False)
+
+
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSessionLocal() as session:
+        yield session

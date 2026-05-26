@@ -3,16 +3,14 @@ from logging.config import fileConfig
 from pathlib import Path
 
 from alembic import context
-from configuration import Configuration
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 top_dir = Path(sys.prefix).resolve().parent
 
 sys.path.append(str(top_dir))
-db_config = Configuration(top_dir / "sys.ini")
 
-from db.model.restaurant import BaseModel
+from db.model.user import BaseModel
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
