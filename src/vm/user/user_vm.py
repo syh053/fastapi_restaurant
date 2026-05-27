@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import Body
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class UserAddReq(BaseModel):
@@ -19,3 +19,7 @@ class UserGetReqModel(BaseModel):
 class UserGetRespModel(BaseModel):
     name: Annotated[str, Field(description='使用者姓名')]
     email: Annotated[str, Field(max_length=256, description='email')]
+    password: Annotated[str, Body(description='密碼')]
+    is_admin: Annotated[bool, Body(description='是否為管理員')]
+
+    model_config = ConfigDict(from_attributes=True)
