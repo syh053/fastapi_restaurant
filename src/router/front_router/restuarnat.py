@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from src.router.dependencies.auth import get_current_user, require_admin
+from src.dependencies.auth import get_current_user
 
 RESTAURANT_ROUTER = APIRouter(
     prefix="/restaurant",

@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.model.user import User
-from src.router.dependencies.auth import check_password
+from src.dependencies.auth import check_password
 from src.tool.jwt_tool import create_access_token
 from src.vm.user.user_vm import UserGetReqModel, UserGetRespModel
 
@@ -49,7 +49,8 @@ class GetUser:
         else:
             raise HTTPException(status_code=400, detail="錯誤的使用者名稱或密碼")
 
-    async def logout(self, response: Response) -> None:
+    @staticmethod
+    async def logout(response: Response) -> None:
         response.delete_cookie("access_token")
 
     async def _get_user_from_db(self, name: str, as_class: Type[T] = None) -> T:
