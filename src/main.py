@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 import uvicorn
+from starlette.middleware.cors import CORSMiddleware
 
 from src.router import TOTAL_ROUTER
 
@@ -26,6 +27,15 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(TOTAL_ROUTER)
+
+# 設定跨來源請求
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 if __name__ == "__main__":
     uvicorn.run(**WEB_SERVER_SETTING)

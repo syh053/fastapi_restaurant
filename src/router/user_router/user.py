@@ -1,6 +1,7 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response
+from errors import Missing
+from fastapi import APIRouter, Depends, Response, HTTPException
 
 from src.service.user.add_user import AddUser
 from src.service.user.get_user import GetUser
@@ -25,7 +26,10 @@ async def login(
         data: UserGetReqModel,
         response: Response
 ):
-    await service.login(user=data, response=response)
+    try:
+        await service.login(user=data, response=response)
+    except Missing as e:
+        raise HTTPException(status_code=400, detail=e.msg)
 
 
 @USER_ROUTER.post("/logout")

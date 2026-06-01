@@ -1,5 +1,6 @@
 from typing import TypeVar, Type
 
+from errors import Missing
 from fastapi import HTTPException
 from fastapi import Response
 from sqlalchemy import select
@@ -42,8 +43,8 @@ class GetUser:
                 key="access_token",
                 value=token,
                 httponly=True,
-                secure=True,
-                samesite="lax",
+                secure=False,
+                # samesite="none",
                 max_age=60 * 60 * 24
             )
         else:
@@ -63,6 +64,9 @@ class GetUser:
         stmt = select(User).select_from(User).where(User.name == name)
         result = await self._session.execute(stmt)
         user = result.scalars().one_or_none()
+
+        if not user:
+            raise Missing(msg="無此名稱!")
 
         if as_class:
             return as_class.model_validate(user)
