@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Query
+from fastapi import Query, Body
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -22,3 +22,11 @@ class EndRestaurantRespModel(BaseModel):
     openingHours: Annotated[int, Field(description='餐廳營業時長')]
     address: Annotated[str, Field(description='餐廳營業時長')]
     description: Annotated[str | None, Field(default=None, description='備註')]
+
+
+class EndRestaurantAddReqModel(BaseModel):
+    name: Annotated[str, Body(description='餐廳名稱')]
+    tel: Annotated[str | None, Body(default=None, description='餐廳電話')]
+    openingHours: Annotated[int, Body(description='餐廳營業時長')]
+    address: Annotated[str, Body(description='餐廳營業時長')]
+    description: Annotated[str | None, Body(default=None, description='備註')]

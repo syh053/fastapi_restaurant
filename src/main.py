@@ -1,11 +1,13 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 
 import uvicorn
 from starlette.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
+from src.exception_handle.handles import register_exception_handlers
 from src.router import TOTAL_ROUTER
 
 WEB_SERVER_SETTING = {
@@ -27,6 +29,8 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(TOTAL_ROUTER)
+
+register_exception_handlers(app=app)
 
 # 設定跨來源請求
 app.add_middleware(
