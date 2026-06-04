@@ -1,11 +1,9 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
-
 import uvicorn
+from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 from src.exception_handle.handles import register_exception_handlers
 from src.router import TOTAL_ROUTER

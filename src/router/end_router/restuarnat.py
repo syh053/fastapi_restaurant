@@ -1,13 +1,13 @@
 from typing import Annotated
 
 from errors import Duplicate
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 
-from src.dependencies.auth import get_current_user, require_admin
+from src.dependencies.auth import require_admin
 from src.service.end_service.crud import CRUDRestaurant
 from src.service.end_service.restaurant import GetRestaurant
 from src.tool.servuce_tool import get_service
-from src.vm.end_restaurant.restaurant_vm import EndRestaurantGetReqModel, EndRestaurantAddReqModel
+from src.vm.end_restaurant.restaurant_vm import EndRestaurantGetReqModel, EndRestaurantReqModel
 
 RESTAURANT_ROUTER = APIRouter(
     prefix="/restaurant",
@@ -25,12 +25,21 @@ async def get_restaurant(
 ):
     return await service.get_all_restaurant(params=query_params)
 
+
 @RESTAURANT_ROUTER.post("")
 async def add_restaurant(
         service: END_RESTAURANT_CRUD_SERVICE,
-        restaurant: EndRestaurantAddReqModel
+        restaurant: EndRestaurantReqModel
 ):
-    try:
-        await service.add_restaurant(restaurant=restaurant)
-    except Duplicate as e:
-        raise HTTPException(status_code=404, detail=e.msg)
+    await service.add_restaurant(restaurant=restaurant)
+
+
+@RESTAURANT_ROUTER.put("")
+async def update_restaurant(
+        service: END_RESTAURANT_CRUD_SERVICE,
+        original_name: Annotated[str, Body(description='原來的餐廳名稱')],
+        restaurant: EndRestaurantReqModel
+):
+    print("原來的餐廳名稱 :", original_name)
+    print("restaurant :", restaurant)
+    await service.update_restaurant(original_name=original_name ,restaurant=restaurant)
