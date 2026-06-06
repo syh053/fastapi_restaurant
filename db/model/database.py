@@ -10,7 +10,9 @@ top_dir = Path(sys.prefix).resolve().parent
 sys.path.append(str(top_dir))
 db_config = Configuration(top_dir / "sys.ini")
 
-async_engine = create_async_engine(db_config["DATABASE"]["sqlalchemy.url"], echo=True)
+async_engine = create_async_engine(db_config["DATABASE"]["sqlalchemy.url"],
+                                   echo=db_config.getboolean("DATABASE", "echo")
+                                   )
 AsyncSessionLocal = async_sessionmaker(async_engine, expire_on_commit=False, autoflush=False)
 
 
