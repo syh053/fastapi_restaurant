@@ -9,6 +9,6 @@ RESTAURANT_ROUTER = APIRouter(
 )
 
 
-@RESTAURANT_ROUTER.get("/all")
+@RESTAURANT_ROUTER.get("/all", summary="餐廳列表")
 async def get_restaurant():
     return "這裡是前台餐廳 API"

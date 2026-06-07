@@ -12,7 +12,7 @@ USER_ROUTER = APIRouter(prefix="/user", tags=["使用者"])
 USER_SERVICE = Annotated[GetUser, Depends(get_service(GetUser))]
 
 
-@USER_ROUTER.post("/signup")
+@USER_ROUTER.post("/signup", summary="使用者註冊")
 async def signup(
         data: UserAddReq,
         service: Annotated[AddUser, Depends(get_service(AddUser))]
@@ -20,7 +20,7 @@ async def signup(
     return await service.add_user(user=data)
 
 
-@USER_ROUTER.post("/login")
+@USER_ROUTER.post("/login", summary="使用者登入")
 async def login(
         service: USER_SERVICE,
         data: UserGetReqModel,
@@ -32,7 +32,7 @@ async def login(
         raise HTTPException(status_code=400, detail=e.msg)
 
 
-@USER_ROUTER.post("/logout")
+@USER_ROUTER.post("/logout", summary="使用者登出")
 async def logout(
         service: USER_SERVICE,
         response: Response
