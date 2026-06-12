@@ -1,12 +1,17 @@
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
+from starlette.staticfiles import StaticFiles
 
 from src.exception_handle.handles import register_exception_handlers
 from src.router import TOTAL_ROUTER
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+UPLOAD_DIR = PROJECT_ROOT / "uploads"
 
 WEB_SERVER_SETTING = {
     "app": "main:app",
@@ -27,6 +32,7 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(TOTAL_ROUTER)
+app.mount("/assets", StaticFiles(directory=UPLOAD_DIR), name="static")
 
 register_exception_handlers(app=app)
 

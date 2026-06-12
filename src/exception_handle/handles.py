@@ -15,10 +15,10 @@ async def unicorn_exception_handler(_request: Request, exc: HTTPException):
     )
 
 def register_exception_handlers(app: FastAPI):
-    app.add_exception_handler(
-        HTTPException,
-        unicorn_exception_handler
-    )
+    # app.add_exception_handler(
+    #     HTTPException,
+    #     unicorn_exception_handler
+    # )
 
     app.add_exception_handler(
         Duplicate,

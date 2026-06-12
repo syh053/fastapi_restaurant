@@ -14,3 +14,4 @@ class Restaurant(BaseModel):
     openingHours: Mapped[int] = mapped_column(Integer, nullable=False, comment="營業時長")
     address: Mapped[str] = mapped_column(String(256), nullable=False, comment="餐廳地址")
     description: Mapped[str] = mapped_column(Text, nullable=True, comment="備註")
+    image: Mapped[str] = mapped_column(String(256), nullable=True, comment="圖片連結")
