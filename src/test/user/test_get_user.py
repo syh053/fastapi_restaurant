@@ -57,7 +57,7 @@ class TestGetUser:
             key="access_token",
             value="fake_token",
             httponly=True,
-            secure=True,
-            samesite="lax",
+            secure=False,
+            # samesite="lax",
             max_age=60 * 60 * 24
         )

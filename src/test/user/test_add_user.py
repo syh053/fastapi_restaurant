@@ -72,7 +72,7 @@ class TestAddUser:
             )
         ]
     )
-    async def test_add_user(self, service: AddUser, user: UserAddReq):
+    async def test_add_user_error(self, service: AddUser, user: UserAddReq):
         with pytest.raises(HTTPException):
             await service.add_user(user)
 
