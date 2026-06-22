@@ -27,16 +27,19 @@ class CRUDRestaurant:
         :return: 無
         """
 
+        add_data = restaurant.model_dump()
+
         # 檔案處理
-        file_name: str = f"/assets/{file.filename}"
-        await self._save_file_to_folder(file=file)
+        if file:
+            file_name: str = f"/assets/{file.filename}"
+            await self._save_file_to_folder(file=file)
+            add_data["image"] = file_name
 
         existed = await self._check_if_existed_restaurant(restaurant.name)
 
         if not existed:
             stmt = insert(Restaurant).values(
-                **restaurant.model_dump(),
-                image=file_name
+                **add_data,
             )
 
             await self._session.execute(stmt)

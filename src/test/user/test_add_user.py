@@ -11,7 +11,7 @@ from src.vm.user.user_vm import UserAddReq
 
 class TestAddUser:
     @pytest.fixture
-    def mock_session(self) -> AsyncSession:
+    def mock_session(self) -> AsyncMock:
         session = AsyncMock()
         session.execute = AsyncMock()
         session.commit = AsyncMock()
