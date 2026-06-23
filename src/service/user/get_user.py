@@ -1,4 +1,5 @@
 from typing import TypeVar, Type
+from uuid import uuid4
 
 from errors import Missing
 from fastapi import HTTPException
@@ -8,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.model.user import User
 from src.dependencies.auth import check_password
-from src.tool.jwt_tool import create_access_token
+from src.tool.redis_client import create_session, delete_session
 from src.vm.user.user_vm import UserGetReqModel, UserGetRespModel
 
 T = TypeVar("T")
@@ -38,21 +39,27 @@ class GetUser:
         check = check_password(user.password.encode("utf-8"), db_user.password.encode("utf-8"))
 
         if check:
-            token = create_access_token(user_id=str(db_user.name), is_admin=db_user.is_admin)
+            session_id = str(uuid4())
+            await create_session(
+                session_id,
+                {"user_id": str(db_user.name), "role": db_user.is_admin},
+                expires=60,
+            )
             response.set_cookie(
-                key="access_token",
-                value=token,
+                key="session_id",
+                value=session_id,
                 httponly=True,
                 secure=False,
-                # samesite="none",
                 max_age=60 * 60 * 24
             )
         else:
             raise HTTPException(status_code=400, detail="錯誤的使用者名稱或密碼")
 
     @staticmethod
-    async def logout(response: Response) -> None:
-        response.delete_cookie("access_token")
+    async def logout(response: Response, session_id: str | None = None) -> None:
+        if session_id:
+            await delete_session(session_id)
+        response.delete_cookie("session_id")
 
     async def _get_user_from_db(self, name: str, as_class: Type[T] = None) -> T:
         """

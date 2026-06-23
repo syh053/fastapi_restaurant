@@ -12,6 +12,7 @@ dependencies = [
     "psycopg2>=2.9.12",
     "python-jose[cryptography]>=3.5.0",
     "python-multipart>=0.0.32",
+    "redis[asyncio,hiredis]>=8.0.0",
     "ryan-tool",
     "sqlalchemy>=2.0.49",
 ]

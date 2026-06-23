@@ -1,11 +1,11 @@
 from typing import Annotated
 
 from errors import Missing
-from fastapi import APIRouter, Depends, Response, HTTPException
+from fastapi import APIRouter, Depends, Response, HTTPException, Cookie
 
 from src.service.user.add_user import AddUser
 from src.service.user.get_user import GetUser
-from src.tool.servuce_tool import get_service
+from src.tool.service_tool import get_service
 from src.vm.user.user_vm import UserAddReq, UserGetReqModel
 
 USER_ROUTER = APIRouter(prefix="/user", tags=["使用者"])
@@ -35,6 +35,7 @@ async def login(
 @USER_ROUTER.post("/logout", summary="使用者登出")
 async def logout(
         service: USER_SERVICE,
-        response: Response
+        response: Response,
+        session_id: str | None = Cookie(default=None),
 ):
-    await service.logout(response=response)
+    await service.logout(response=response, session_id=session_id)
