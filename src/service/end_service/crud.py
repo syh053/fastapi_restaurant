@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 
 import aiofiles
@@ -8,6 +9,7 @@ from sqlalchemy import insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.model import Restaurant
+from db.model.category import Category
 from src.vm.end_restaurant.restaurant_vm import EndRestaurantReqModel
 
 restaurant_path = Path(__file__).resolve().parents[3] / "uploads"
@@ -27,7 +29,12 @@ class CRUDRestaurant:
         :return: 無
         """
 
+        default_category_id = await self._get_default_category_id()
+
         add_data = restaurant.model_dump()
+
+        if not add_data["category_id"]:
+            add_data["category_id"] = default_category_id
 
         # 檔案處理
         if file:
@@ -124,3 +131,9 @@ class CRUDRestaurant:
             raise HTTPException(status_code=500, detail=f"檔案寫入失敗: {str(e)}")
         finally:
             await file.close()
+
+    async def _get_default_category_id(self) -> uuid.UUID:
+        stmt = select(Category.id).where(Category.name == "預設分類")
+        result = await self._session.execute(stmt)
+        result = result.scalar_one_or_none()
+        return result

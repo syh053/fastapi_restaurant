@@ -1,3 +1,4 @@
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Body, Query, File, UploadFile, Form
@@ -20,9 +21,16 @@ END_RESTAURANT_CRUD_SERVICE = Annotated[CRUDRestaurant, Depends(get_service(CRUD
 @RESTAURANT_ROUTER.get("/all", summary="餐聽列表")
 async def get_restaurant(
         service: END_RESTAURANT_SERVICE,
-        query_params: EndRestaurantGetReqModel = Depends()
+        query_params: Annotated[EndRestaurantGetReqModel, Query(description='查詢參數')]
 ):
     return await service.get_all_restaurant(params=query_params)
+
+
+@RESTAURANT_ROUTER.get("/category", summary="取得餐廳類別列表")
+async def get_restaurant_category(
+        service: END_RESTAURANT_SERVICE,
+):
+    return await service.get_category()
 
 
 @RESTAURANT_ROUTER.post("", summary="新增餐廳")
@@ -33,6 +41,7 @@ async def add_restaurant(
         opening_hours: int = Form(description='營業時長'),
         address: str = Form(description='餐廳地址'),
         description: str | None = Form(default=None, description='描述'),
+        category_id: uuid.UUID | None = Form(default=None, examples=[None], description='餐廳分類'),
         image: Annotated[UploadFile | None, File(description='餐廳照片')] = None
 ):
     restaurant = EndRestaurantReqModel(
@@ -40,7 +49,8 @@ async def add_restaurant(
         tel=tel,
         openingHours=opening_hours,
         address=address,
-        description=description
+        description=description,
+        category_id=category_id
     )
 
     await service.add_restaurant(restaurant=restaurant, file=image)
@@ -55,6 +65,7 @@ async def update_restaurant(
         opening_hours: int = Form(description='營業時長'),
         address: str = Form(description='餐廳地址'),
         description: str | None = Form(default=None, description='描述'),
+        category_id: uuid.UUID | None = Form(default=None, examples=[None], description='餐廳分類'),
         image: Annotated[UploadFile | None, File(description='餐廳照片')] = None
 ):
     restaurant = EndRestaurantReqModel(
@@ -62,7 +73,8 @@ async def update_restaurant(
         tel=tel,
         openingHours=opening_hours,
         address=address,
-        description=description
+        description=description,
+        category_id=category_id
     )
     await service.update_restaurant(original_name=original_name, restaurant=restaurant, file=image)
 

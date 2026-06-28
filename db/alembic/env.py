@@ -13,11 +13,17 @@ sys.path.append(str(top_dir))
 
 from model_basic import BaseModel
 from db.model import *
+from  db.model.database import db_config
 
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+config.set_main_option(
+    "sqlalchemy.url",
+    db_config["BUILD"]["sqlalchemy.url"],
+)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

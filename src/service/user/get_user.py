@@ -43,7 +43,7 @@ class GetUser:
             await create_session(
                 session_id,
                 {"user_id": str(db_user.name), "role": db_user.is_admin},
-                expires=60,
+                expires=60 * 60 * 6,
             )
             response.set_cookie(
                 key="session_id",

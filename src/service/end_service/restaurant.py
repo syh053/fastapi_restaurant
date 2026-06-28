@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from custom_select.select import select
 from sqlalchemy import func
 
@@ -7,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 from db.model import Restaurant
+from db.model.category import Category
 from src.vm.end_restaurant.restaurant_vm import EndRestaurantGetReqModel, EndRestaurantRespModel
 
 
@@ -16,9 +15,11 @@ class GetRestaurant:
 
     async def get_all_restaurant(self, params: EndRestaurantGetReqModel) -> tuple[list[EndRestaurantRespModel], int]:
         stmt = (
-            select(Restaurant, func.count(Restaurant.id).over().label("total"))
+            select(Restaurant, Category.name.label("category_name"), func.count(Restaurant.id).over().label("total"))
             .select_from(Restaurant)
+            .outerjoin(Category, Restaurant.category_id == Category.id)
             .where_if(params.name, lambda: Restaurant.name.ilike(f"%{params.name}%"))
+            .where_if(params.category_name, lambda: Category.name.ilike(f"%{params.category_name}%"))
             .where_if(params.tel, lambda: Restaurant.tel.ilike(f"%{params.tel}%"))
             .where_if(params.openingHours, lambda: Restaurant.openingHours.ilike(f"%{params.openingHours}%"))
             .where_if(params.address, lambda: Restaurant.address.ilike(f"%{params.address}%"))
@@ -30,7 +31,26 @@ class GetRestaurant:
 
         results = results.fetchall()
 
-        datas = [EndRestaurantRespModel.model_validate(result[0]) for result in results]
-        total = results[0][1] if results else 0
+        datas = [
+            EndRestaurantRespModel(
+                **{
+                    **result[0].__dict__,  # Restaurant 的欄位
+                    "category_name": result[1],
+                }
+            )
+            for result in results
+        ]
+
+        total = results[0][-1] if results else 0
 
         return datas, total
+
+    async def get_category(self):
+        stmt = (
+            select(Category)
+        )
+        results = await self._session.execute(stmt)
+        results = results.scalars().all()
+
+        return results
+
