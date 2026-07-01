@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.model.database import get_session
 from src.service.end_service.restaurant import GetRestaurant
-from src.vm.end_restaurant.restaurant_vm import EndRestaurantGetReqModel, EndRestaurantRespModel
+from src.vm.end.restaurant_vm import EndRestaurantGetReqModel, EndRestaurantRespModel
 
 
 class TestGetRestaurant:

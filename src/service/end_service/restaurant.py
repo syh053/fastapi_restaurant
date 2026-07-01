@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.model import Restaurant
 from db.model.category import Category
-from src.vm.end_restaurant.restaurant_vm import EndRestaurantGetReqModel, EndRestaurantRespModel
+from src.vm.end.restaurant_vm import EndRestaurantGetReqModel, EndRestaurantRespModel
 
 
 class GetRestaurant:
@@ -29,7 +29,7 @@ class GetRestaurant:
         )
         results = await self._session.execute(stmt)
 
-        results = results.fetchall()
+        results = results.all()
 
         datas = [
             EndRestaurantRespModel(

@@ -4,10 +4,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Body, Query, File, UploadFile, Form
 
 from src.dependencies.auth import require_admin
-from src.service.end_service.crud import CRUDRestaurant
+from src.service.end_service.restaurant_crud import CRUDRestaurant
 from src.service.end_service.restaurant import GetRestaurant
 from src.tool.service_tool import get_service
-from src.vm.end_restaurant.restaurant_vm import EndRestaurantGetReqModel, EndRestaurantReqModel
+from src.vm.end.restaurant_vm import EndRestaurantGetReqModel, EndRestaurantReqModel
 
 RESTAURANT_ROUTER = APIRouter(
     prefix="/restaurant",

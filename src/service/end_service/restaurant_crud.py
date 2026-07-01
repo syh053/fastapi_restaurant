@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.model import Restaurant
 from db.model.category import Category
-from src.vm.end_restaurant.restaurant_vm import EndRestaurantReqModel
+from src.vm.end.restaurant_vm import EndRestaurantReqModel
 
 restaurant_path = Path(__file__).resolve().parents[3] / "uploads"
 restaurant_path.mkdir(parents=True, exist_ok=True)

@@ -5,8 +5,8 @@ from errors import Duplicate, Missing
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.service.end_service.crud import CRUDRestaurant
-from src.vm.end_restaurant.restaurant_vm import EndRestaurantReqModel
+from src.service.end_service.restaurant_crud import CRUDRestaurant
+from src.vm.end.restaurant_vm import EndRestaurantReqModel
 
 
 class TestCrudRestaurant:
