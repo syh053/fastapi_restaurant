@@ -14,6 +14,7 @@ class GetRestaurant:
         self._session = session
 
     async def get_all_restaurant(self, params: EndRestaurantGetReqModel) -> tuple[list[EndRestaurantRespModel], int]:
+        print("查詢參數 :", params)
         stmt = (
             select(Restaurant, Category.name.label("category_name"), func.count(Restaurant.id).over().label("total"))
             .select_from(Restaurant)
@@ -21,7 +22,7 @@ class GetRestaurant:
             .where_if(params.name, lambda: Restaurant.name.ilike(f"%{params.name}%"))
             .where_if(params.category_name, lambda: Category.name.ilike(f"%{params.category_name}%"))
             .where_if(params.tel, lambda: Restaurant.tel.ilike(f"%{params.tel}%"))
-            .where_if(params.openingHours, lambda: Restaurant.openingHours.ilike(f"%{params.openingHours}%"))
+            .where_if(params.openingHours, lambda: Restaurant.openingHours == params.openingHours)
             .where_if(params.address, lambda: Restaurant.address.ilike(f"%{params.address}%"))
             .where_if(params.description, lambda :Restaurant.description.ilike(f"%{params.description}%"))
             .offset((params.current_page - 1) * params.page_size)
