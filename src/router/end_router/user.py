@@ -1,7 +1,7 @@
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
-from watchfiles import awatch
 
 from src.dependencies.auth import require_admin
 from src.service.end_service.user import UserCrud
@@ -30,3 +30,10 @@ async def update_user_access(
         params: EndUserUpdateReqModel,
 ):
     return await service.update_user_access(params=params)
+
+@END_USER_ROUTER.delete("", summary="使用者刪除")
+async def delete_user(
+        service: END_USER_SERVICE,
+        delete_list: Annotated[list[uuid.UUID], Query()]
+):
+    return await service.delete_user(delete_list=delete_list)
