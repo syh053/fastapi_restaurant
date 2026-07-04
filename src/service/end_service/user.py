@@ -1,9 +1,12 @@
+import uuid
+
 from custom_select.select import select
-from sqlalchemy import func
+from errors import Missing
+from sqlalchemy import func, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.model import User
-from src.vm.end.user_vm import EndUserGetReqModel, EndUserRespModel
+from src.vm.end.user_vm import EndUserGetReqModel, EndUserRespModel, EndUserUpdateReqModel
 
 
 class UserCrud:
@@ -33,3 +36,41 @@ class UserCrud:
         total = results[0][1] if results else 0
 
         return datas, total
+
+    async def update_user_access(self, params: EndUserUpdateReqModel) -> None:
+        exist_check = await self._check_if_existed_user(params.id)
+
+        if exist_check:
+            update_data = params.model_dump()
+
+            stmt = (
+                update(User)
+                .values(update_data)
+                .where(User.id == params.id)
+            )
+            await self._session.execute(stmt)
+            await self._session.commit()
+        else:
+            raise Missing(msg="使用者不存在")
+
+    async def delete_user(self, delete_list: list[uuid.UUID]) -> None:
+        for delete_id in delete_list:
+            exist_check = await self._check_if_existed_user(delete_id)
+            if not exist_check:
+                raise Missing(msg=f"使用者 id : {delete_id} 不存在，取消所有刪除，請確認。")
+
+        stmt = delete(User).where(User.id.in_(delete_list))
+
+        await self._session.execute(stmt)
+        await self._session.commit()
+
+    async def _check_if_existed_user(self, user_id):
+        stmt = (
+            select(User).where(User.id == user_id)
+        )
+        results = await self._session.scalar(stmt)
+
+        if results:
+            return True
+        else:
+            return False
