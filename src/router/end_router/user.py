@@ -6,7 +6,7 @@ from watchfiles import awatch
 from src.dependencies.auth import require_admin
 from src.service.end_service.user import UserCrud
 from src.tool.service_tool import get_service
-from src.vm.end.user_vm import EndUserGetReqModel
+from src.vm.end.user_vm import EndUserGetReqModel, EndUserUpdateReqModel
 
 END_USER_ROUTER = APIRouter(
     prefix="/user",
@@ -23,3 +23,10 @@ async def get_user(
         query_params: Annotated[EndUserGetReqModel, Query(description='查詢參數')]
 ):
     return await service.get_users(params=query_params)
+
+@END_USER_ROUTER.put("/update_access", summary="變更使用者權限")
+async def update_user_access(
+        service: END_USER_SERVICE,
+        params: EndUserUpdateReqModel,
+):
+    return await service.update_user_access(params=params)
