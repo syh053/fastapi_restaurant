@@ -14,7 +14,6 @@ class GetRestaurant:
         self._session = session
 
     async def get_all_restaurant(self, params: EndRestaurantGetReqModel) -> tuple[list[EndRestaurantRespModel], int]:
-        print("查詢參數 :", params)
         stmt = (
             select(Restaurant, Category.name.label("category_name"), func.count(Restaurant.id).over().label("total"))
             .select_from(Restaurant)

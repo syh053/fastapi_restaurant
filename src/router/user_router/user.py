@@ -26,10 +26,7 @@ async def login(
         data: UserGetReqModel,
         response: Response
 ):
-    try:
-        await service.login(user=data, response=response)
-    except Missing as e:
-        raise HTTPException(status_code=400, detail=e.msg)
+    await service.login(user=data, response=response)
 
 
 @USER_ROUTER.post("/logout", summary="使用者登出")

@@ -28,12 +28,10 @@ class CRUDRestaurant:
         :param file: 上傳的餐廳圖片檔案，若無則為 None。
         :return: 無
         """
-
-        default_category_id = await self._get_default_category_id()
-
         add_data = restaurant.model_dump()
 
         if not add_data["category_id"]:
+            default_category_id = await self._get_default_category_id()
             add_data["category_id"] = default_category_id
 
         # 檔案處理

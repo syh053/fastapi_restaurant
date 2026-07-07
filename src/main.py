@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 
-from src.exception_handle.handles import register_exception_handlers
+from src.exception_handle.register import register_exception_handlers
 from src.router import TOTAL_ROUTER
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]

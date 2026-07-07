@@ -33,8 +33,8 @@ class GetUser:
         """
         db_user = await self._get_user_from_db(user.name, as_class=UserGetRespModel)
 
-        if not db_user:
-            raise HTTPException(status_code=400, detail="錯誤的使用者名稱或密碼")
+        # if not db_user:
+        #     raise HTTPException(status_code=400, detail="錯誤的使用者名稱或密碼")
 
         check = check_password(user.password.encode("utf-8"), db_user.password.encode("utf-8"))
 
