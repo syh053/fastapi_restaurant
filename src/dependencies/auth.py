@@ -2,7 +2,6 @@ import bcrypt
 from fastapi import HTTPException, Cookie, Depends
 from fastapi.security import OAuth2PasswordBearer
 
-from src.tool.jwt_tool import decode_access_token
 from src.tool.redis_client import get_session
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")

@@ -1,7 +1,4 @@
-from unittest.mock import AsyncMock
-
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.model.database import get_session
 from src.service.end_service.restaurant import GetRestaurant

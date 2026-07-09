@@ -1,4 +1,6 @@
 import bcrypt
+from custom_select.select import select
+from errors import Duplicate
 from fastapi import HTTPException
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,17 +19,30 @@ class AddUser:
         elif user.password != user.confirm_password:
             raise HTTPException(status_code=400, detail="密碼輸入不一致")
 
-        new_user = (
-            user.model_copy(update={"password": self._get_hashed_password(user.password)})
-            .model_dump(exclude={"confirm_password"})
-        )
+        existed = await self._check_if_existed_user(user.name)
 
-        stmt = insert(User).values(new_user)
-        await self._session.execute(stmt)
-        await self._session.commit()
+        if not existed:
+            new_user = (
+                user.model_copy(update={"password": self._get_hashed_password(user.password)})
+                .model_dump(exclude={"confirm_password"})
+            )
 
-        return user
+            stmt = insert(User).values(new_user)
+            await self._session.execute(stmt)
+            await self._session.commit()
+
+            return user
+        else:
+            raise Duplicate(msg="此使用者已存在")
 
     @staticmethod
     def _get_hashed_password(password: str) -> str:
         return bcrypt.hashpw(password.encode("utf-8"), salt=bcrypt.gensalt()).decode("utf-8")
+
+    async def _check_if_existed_user(self, name) -> bool:
+        stmt = select(User).where(User.name == name)
+        result = await self._session.scalar(stmt)
+        if result:
+            return True
+        else:
+            return False

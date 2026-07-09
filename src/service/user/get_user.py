@@ -33,8 +33,8 @@ class GetUser:
         """
         db_user = await self._get_user_from_db(user.name, as_class=UserGetRespModel)
 
-        # if not db_user:
-        #     raise HTTPException(status_code=400, detail="錯誤的使用者名稱或密碼")
+        if not db_user:
+            raise Missing(msg="無此名稱!")
 
         check = check_password(user.password.encode("utf-8"), db_user.password.encode("utf-8"))
 
@@ -61,6 +61,32 @@ class GetUser:
             await delete_session(session_id)
         response.delete_cookie("session_id")
 
+    async def check_user_existed(self, name: str) -> bool:
+        """
+        檢查使用者是否存在
+
+        :param name: 使用者名稱
+        :return:
+        """
+        result = await self._get_user_from_db(name)
+        if result:
+            return False
+        else:
+            return True
+
+    async def check_email_existed(self, email: str) -> bool:
+        """
+        檢查信箱是否已註冊
+
+        :param email:
+        :return:
+        """
+        result = await self._get_email_existed(email)
+        if result:
+            return False
+        else:
+            return True
+
     async def _get_user_from_db(self, name: str, as_class: Type[T] = None) -> T:
         """
         從資料庫取得使用者資訊
@@ -73,9 +99,24 @@ class GetUser:
         user = result.scalars().one_or_none()
 
         if not user:
-            raise Missing(msg="無此名稱!")
+            return None
 
         if as_class:
             return as_class.model_validate(user)
         else:
             return user
+
+    async def _get_email_existed(self, email: str) -> bool:
+        """
+        查看信箱是否已存在
+
+        :param email: 使用者信箱
+        :return: 回傳布林值
+        """
+        stmt = select(User).select_from(User).where(User.email == email)
+        email = await self._session.scalar(stmt)
+
+        if  email:
+            return True
+        else:
+            return False
