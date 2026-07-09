@@ -1,7 +1,6 @@
 from typing import Annotated
 
-from errors import Missing
-from fastapi import APIRouter, Depends, Response, HTTPException, Cookie
+from fastapi import APIRouter, Depends, Response, Cookie, Query
 
 from src.service.user.add_user import AddUser
 from src.service.user.get_user import GetUser
@@ -10,6 +9,22 @@ from src.vm.user.user_vm import UserAddReq, UserGetReqModel
 
 USER_ROUTER = APIRouter(prefix="/user", tags=["使用者"])
 USER_SERVICE = Annotated[GetUser, Depends(get_service(GetUser))]
+
+
+@USER_ROUTER.get("/check_name_existed")
+async def check_user_existed(
+        name: Annotated[str, Query(description="使用者名稱")],
+        service: USER_SERVICE
+):
+    return await service.check_user_existed(name=name)
+
+
+@USER_ROUTER.get("/check_email_existed")
+async def check_user_existed(
+        email: Annotated[str, Query(description="使用者信箱")],
+        service: USER_SERVICE
+):
+    return await service.check_email_existed(email=email)
 
 
 @USER_ROUTER.post("/signup", summary="使用者註冊")

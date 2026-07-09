@@ -118,7 +118,8 @@ class CRUDRestaurant:
         else:
             return False
 
-    async def _save_file_to_folder(self, file: UploadFile) -> None:
+    @staticmethod
+    async def _save_file_to_folder(file: UploadFile) -> None:
         file_location = restaurant_path / file.filename
 
         try:

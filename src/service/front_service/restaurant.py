@@ -1,10 +1,6 @@
-from typing import Sequence
-
 from custom_select.select import select
 from sqlalchemy import func
-
 from sqlalchemy.ext.asyncio import AsyncSession
-
 
 from db.model import Restaurant
 from src.vm.end.restaurant_vm import EndRestaurantGetReqModel, EndRestaurantRespModel
