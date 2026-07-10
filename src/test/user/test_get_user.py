@@ -24,7 +24,7 @@ class TestGetUser:
 
     @pytest.fixture
     def response(self) -> MagicMock:
-        return MagicMock(spec=Response)
+        return MagicMock()
 
     @pytest.fixture
     def user(self) -> UserGetReqModel:
@@ -106,7 +106,7 @@ class TestGetUser:
         :param response: 替換為 AsyncMock(spec=Response)
         :return:
         """
-        service._get_user_from_db = AsyncMock(side_effect=Missing(msg="無此名稱!"))
+        service._get_user_from_db = AsyncMock(return_value=None)
 
         with pytest.raises(Missing):
             await service.login(user, response)
