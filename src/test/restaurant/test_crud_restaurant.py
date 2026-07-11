@@ -1,4 +1,5 @@
 from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID
 
 import pytest
 from errors import Duplicate, Missing
@@ -27,7 +28,7 @@ class TestCrudRestaurant:
             name="玉堂春魯肉飯",
             tel="04-23013008",
             openingHours=6,
-            address="臺中市西區中興里美村路一段220號",
+            address="臺中市西區中興里美村路一段220號"
         )
 
     @pytest.fixture
@@ -36,9 +37,15 @@ class TestCrudRestaurant:
         file.filename = "test.jpg"
         return file
 
-    async def test_add_restaurant(self, service, restaurant: EndRestaurantReqModel, mock_file: MagicMock):
+    async def test_add_restaurant(
+            self,
+            service: CRUDRestaurant,
+            restaurant: EndRestaurantReqModel,
+            mock_file: MagicMock
+    ):
         service._save_file_to_folder = AsyncMock(return_value=mock_file)
         service._check_if_existed_restaurant = AsyncMock(return_value=False)
+        service._get_default_category_id = AsyncMock(return_value=UUID("089b94d1-1129-4e1a-8d29-4683d2e9004b"))
 
         await service.add_restaurant(restaurant=restaurant, file=mock_file)
 
@@ -50,12 +57,13 @@ class TestCrudRestaurant:
 
     async def test_add_restaurant_with_error(
             self,
-            service,
+            service: CRUDRestaurant,
             restaurant: EndRestaurantReqModel,
             mock_file: MagicMock
     ):
         service._save_file_to_folder = AsyncMock(return_value=mock_file)
         service._check_if_existed_restaurant = AsyncMock(return_value=True)
+        service._get_default_category_id = AsyncMock(return_value=UUID("089b94d1-1129-4e1a-8d29-4683d2e9004b"))
 
         with pytest.raises(Duplicate):
             await service.add_restaurant(restaurant=restaurant, file=mock_file)
@@ -72,7 +80,7 @@ class TestCrudRestaurant:
     )
     async def test_update_restaurant(
             self,
-            service,
+            service: CRUDRestaurant,
             original_name,
             restaurant: EndRestaurantReqModel,
             mock_file: MagicMock
@@ -97,7 +105,7 @@ class TestCrudRestaurant:
     )
     async def test_update_restaurant_with_error(
             self,
-            service,
+            service: CRUDRestaurant,
             original_name,
             restaurant: EndRestaurantReqModel,
             mock_file: MagicMock
@@ -124,7 +132,7 @@ class TestCrudRestaurant:
             ["玉堂春魯肉飯", "李海魯肉飯", "財神爺魯肉飯"]
         ]
     )
-    async def test_delete_restaurant(self, service, name_list: list[str]):
+    async def test_delete_restaurant(self, service: CRUDRestaurant, name_list: list[str]):
         service._check_if_existed_restaurant = AsyncMock(
             side_effect=[True, True, True]
         )
@@ -135,7 +143,7 @@ class TestCrudRestaurant:
             ["玉堂春魯肉飯", "李海魯肉飯", "財神爺魯肉飯"]
         ]
     )
-    async def test_delete_restaurant_with_error(self, service, name_list: list[str]):
+    async def test_delete_restaurant_with_error(self, service: CRUDRestaurant, name_list: list[str]):
         service._check_if_existed_restaurant = AsyncMock(
             side_effect=[True, True, False]
         )
