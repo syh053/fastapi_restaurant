@@ -14,7 +14,6 @@ class TestAddUser:
     def mock_session(self) -> AsyncMock:
         session = AsyncMock()
         session.execute = AsyncMock()
-        session.commit = AsyncMock()
         return session
 
     @pytest.fixture
@@ -32,6 +31,8 @@ class TestAddUser:
         ]
     )
     async def test_add_user(self, service: AddUser, user: UserAddReq) -> UserAddReq:
+        service._check_if_existed_user = AsyncMock(return_value=False)
+
         result = await service.add_user(user)
 
         assert result == user

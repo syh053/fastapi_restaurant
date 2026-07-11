@@ -29,7 +29,6 @@ class AddUser:
 
             stmt = insert(User).values(new_user)
             await self._session.execute(stmt)
-            await self._session.commit()
 
             return user
         else:

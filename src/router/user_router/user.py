@@ -11,7 +11,7 @@ USER_ROUTER = APIRouter(prefix="/user", tags=["使用者"])
 USER_SERVICE = Annotated[GetUser, Depends(get_service(GetUser))]
 
 
-@USER_ROUTER.get("/check_name_existed")
+@USER_ROUTER.get("/check_name_existed", summary="檢查使用者名稱是否存在")
 async def check_user_existed(
         name: Annotated[str, Query(description="使用者名稱")],
         service: USER_SERVICE
@@ -19,7 +19,7 @@ async def check_user_existed(
     return await service.check_user_existed(name=name)
 
 
-@USER_ROUTER.get("/check_email_existed")
+@USER_ROUTER.get("/check_email_existed", summary="檢查信箱是否存在")
 async def check_user_existed(
         email: Annotated[str, Query(description="使用者信箱")],
         service: USER_SERVICE

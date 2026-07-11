@@ -18,4 +18,9 @@ AsyncSessionLocal = async_sessionmaker(async_engine, expire_on_commit=False, aut
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
-        yield session
+        try:
+            yield session
+            await session.commit() # 若沒有 Exception，就自動提交
+        except Exception:
+            await session.rollback()  # 若發生異常，立刻回滾
+            raise  # 將錯誤繼續往外丟，讓 FastAPI 的 Exception Handler 處理

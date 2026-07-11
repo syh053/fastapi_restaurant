@@ -15,7 +15,6 @@ class TestCrudRestaurant:
     def mock_session(self) -> AsyncMock:
         session = MagicMock(spec=AsyncSession)
         session.execute = AsyncMock()
-        session.commit = AsyncMock()
         return session
 
     @pytest.fixture
@@ -53,7 +52,7 @@ class TestCrudRestaurant:
         service._check_if_existed_restaurant.assert_awaited_once_with("玉堂春魯肉飯")
 
         service._session.execute.assert_awaited_once()  # type: ignore
-        service._session.commit.assert_awaited_once()  # type: ignore
+
 
     async def test_add_restaurant_with_error(
             self,
@@ -73,7 +72,7 @@ class TestCrudRestaurant:
 
         # 不會進 DB 操作
         service._session.execute.assert_not_awaited()  # type: ignore
-        service._session.commit.assert_not_awaited()  # type: ignore
+
 
     @pytest.mark.parametrize(
         "original_name", ["玉堂春魯肉飯"]
@@ -98,7 +97,7 @@ class TestCrudRestaurant:
         service._check_if_existed_restaurant.assert_awaited_once_with("玉堂春魯肉飯")
 
         service._session.execute.assert_awaited_once()  # type: ignore
-        service._session.commit.assert_awaited_once()  # type: ignore
+
 
     @pytest.mark.parametrize(
         "original_name", ["玉堂春魯肉飯"]
@@ -125,7 +124,6 @@ class TestCrudRestaurant:
 
         # 不會進 DB 操作
         service._session.execute.assert_not_awaited()  # type: ignore
-        service._session.commit.assert_not_awaited()  # type: ignore
 
     @pytest.mark.parametrize(
         "name_list", [

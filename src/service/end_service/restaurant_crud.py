@@ -48,7 +48,6 @@ class CRUDRestaurant:
             )
 
             await self._session.execute(stmt)
-            await self._session.commit()
         else:
             raise Duplicate(msg='此餐廳已存在')
 
@@ -83,7 +82,6 @@ class CRUDRestaurant:
             )
 
             await self._session.execute(stmt)
-            await self._session.commit()
         else:
             raise Missing(msg="餐廳不存在")
 
@@ -102,7 +100,6 @@ class CRUDRestaurant:
         stmt = delete(Restaurant).where(Restaurant.name.in_(restaurant_name_list))
 
         await self._session.execute(stmt)
-        await self._session.commit()
 
     async def _check_if_existed_restaurant(self, name: str) -> bool:
         stmt = (

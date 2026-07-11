@@ -49,7 +49,6 @@ class UserCrud:
                 .where(User.id == params.id)
             )
             await self._session.execute(stmt)
-            await self._session.commit()
         else:
             raise Missing(msg="使用者不存在")
 
@@ -62,7 +61,6 @@ class UserCrud:
         stmt = delete(User).where(User.id.in_(delete_list))
 
         await self._session.execute(stmt)
-        await self._session.commit()
 
     async def _check_if_existed_user(self, user_id):
         stmt = (

@@ -15,7 +15,6 @@ class TestGetUser:
     def mock_session(self) -> AsyncMock:
         session = AsyncMock()
         session.execute = AsyncMock()
-        session.commit = AsyncMock()
         return session
 
     @pytest.fixture
