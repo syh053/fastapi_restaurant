@@ -2,8 +2,8 @@ from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from errors import Missing
-from fastapi import Response, HTTPException
+from database_errors.errors import Missing
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.service.user.get_user import GetUser

@@ -1,4 +1,4 @@
-from errors import Missing, Duplicate
+from database_errors.errors import Duplicate, Missing
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 

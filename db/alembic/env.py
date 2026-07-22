@@ -3,6 +3,7 @@ from logging.config import fileConfig
 from pathlib import Path
 
 from alembic import context
+from model_basic.model_basic import BaseModel
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -11,7 +12,7 @@ top_dir = Path(sys.prefix).resolve().parent
 
 sys.path.append(str(top_dir))
 
-from model_basic import BaseModel
+
 from db.model import *
 from  db.model.database import db_config
 

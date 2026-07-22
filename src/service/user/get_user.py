@@ -1,7 +1,7 @@
 from typing import TypeVar, Type
 from uuid import uuid4
 
-from errors import Missing
+from database_errors.errors import Missing
 from fastapi import HTTPException
 from fastapi import Response
 from sqlalchemy import select

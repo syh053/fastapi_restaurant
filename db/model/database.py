@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 from typing import AsyncGenerator
 
-from configuration import Configuration
+from configuration.configuration import Configuration
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 top_dir = Path(sys.prefix).resolve().parent

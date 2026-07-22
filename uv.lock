@@ -233,23 +233,6 @@ wheels = [
 ]
 
 [[package]]
-name = "configparser"
-version = "7.2.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/8b/ac/ea19242153b5e8be412a726a70e82c7b5c1537c83f61b20995b2eda3dcd7/configparser-7.2.0.tar.gz", hash = "sha256:b629cc8ae916e3afbd36d1b3d093f34193d851e11998920fdcfc4552218b7b70", size = 51273, upload-time = "2025-03-08T16:04:09.339Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/09/fe/f61e7129e9e689d9e40bbf8a36fb90f04eceb477f4617c02c6a18463e81f/configparser-7.2.0-py3-none-any.whl", hash = "sha256:fee5e1f3db4156dcd0ed95bc4edfa3580475537711f67a819c966b389d09ce62", size = 17232, upload-time = "2025-03-08T16:04:07.743Z" },
-]
-
-[[package]]
-name = "configuration"
-version = "1.0.2"
-source = { git = "https://github.com/syh053/ryan_tool.git?subdirectory=src%2Fconfiguration#67d6d25e7e592a6819bfdce6f31ff985cf165841" }
-dependencies = [
-    { name = "configparser" },
-]
-
-[[package]]
 name = "cryptography"
 version = "48.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -301,11 +284,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/b8/23/6e6f32143ab5d8b36ca848a502c4bcd477ae75b9e1677e3530d669062578/cryptography-48.0.0-cp39-abi3-win32.whl", hash = "sha256:77a2ccbbe917f6710e05ba9adaa25fb5075620bf3ea6fb751997875aff4ae4bd", size = 3279117, upload-time = "2026-05-04T22:59:12.019Z" },
     { url = "https://files.pythonhosted.org/packages/9d/9a/0fea98a70cf1749d41d738836f6349d97945f7c89433a259a6c2642eefeb/cryptography-48.0.0-cp39-abi3-win_amd64.whl", hash = "sha256:16cd65b9330583e4619939b3a3843eec1e6e789744bb01e7c7e2e62e33c239c8", size = 3792100, upload-time = "2026-05-04T22:59:14.884Z" },
 ]
-
-[[package]]
-name = "database-errors"
-version = "1.0.1"
-source = { git = "https://github.com/syh053/ryan_tool.git?subdirectory=src%2Fdatabase_errors#67d6d25e7e592a6819bfdce6f31ff985cf165841" }
 
 [[package]]
 name = "detect-installer"
@@ -754,14 +732,6 @@ wheels = [
 ]
 
 [[package]]
-name = "model-basic"
-version = "1.0.1"
-source = { git = "https://github.com/syh053/ryan_tool.git?subdirectory=src%2Fmodel_basic#67d6d25e7e592a6819bfdce6f31ff985cf165841" }
-dependencies = [
-    { name = "sqlalchemy" },
-]
-
-[[package]]
 name = "packaging"
 version = "26.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1068,7 +1038,7 @@ requires-dist = [
     { name = "psycopg2", specifier = ">=2.9.12" },
     { name = "python-jose", extras = ["cryptography"], specifier = ">=3.5.0" },
     { name = "python-multipart", specifier = ">=0.0.32" },
-    { name = "redis", extras = ["asyncio", "hiredis"], specifier = ">=8.0.0" },
+    { name = "redis", extras = ["hiredis"], specifier = ">=8.0.0" },
     { name = "ryan-tool", git = "https://github.com/syh053/ryan_tool.git" },
     { name = "sqlalchemy", specifier = ">=2.0.49" },
 ]
@@ -1173,13 +1143,8 @@ wheels = [
 
 [[package]]
 name = "ryan-tool"
-version = "1.0.1"
-source = { git = "https://github.com/syh053/ryan_tool.git#67d6d25e7e592a6819bfdce6f31ff985cf165841" }
-dependencies = [
-    { name = "configuration" },
-    { name = "database-errors" },
-    { name = "model-basic" },
-]
+version = "1.1.2"
+source = { git = "https://github.com/syh053/ryan_tool.git#c9de3cf5059f9bb09ff0f908636f9c6819c9e854" }
 
 [[package]]
 name = "sentry-sdk"

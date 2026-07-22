@@ -1,6 +1,8 @@
 import bcrypt
 from custom_select.select import select
-from errors import Duplicate
+
+from database_errors.errors import Duplicate
+
 from fastapi import HTTPException
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession

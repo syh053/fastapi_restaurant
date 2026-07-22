@@ -2,7 +2,8 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID
 
 import pytest
-from errors import Duplicate, Missing
+from database_errors.errors import Duplicate, Missing
+
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 

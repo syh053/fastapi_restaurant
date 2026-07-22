@@ -1,7 +1,7 @@
 import uuid
 
 from custom_select.select import select
-from errors import Missing
+from database_errors.errors import Missing
 from sqlalchemy import func, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 

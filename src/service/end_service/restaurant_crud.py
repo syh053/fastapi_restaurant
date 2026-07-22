@@ -3,7 +3,8 @@ from pathlib import Path
 
 import aiofiles
 from custom_select.select import select
-from errors import Duplicate, Missing
+from database_errors.errors import Duplicate, Missing
+
 from fastapi import UploadFile, HTTPException
 from sqlalchemy import insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession

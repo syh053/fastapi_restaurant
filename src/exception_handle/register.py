@@ -1,4 +1,4 @@
-from errors import Missing, Duplicate
+from database_errors.errors import Duplicate, Missing
 from fastapi import FastAPI
 
 from src.exception_handle.handlers import update_error_handler, add_error_handler
