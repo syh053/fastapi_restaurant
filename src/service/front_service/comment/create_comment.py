@@ -8,7 +8,7 @@ from src.service.basic.basic_service import BasicService
 from src.vm.comment.comment_vm import CommentCreateReqModel
 
 
-class CommentService(BasicService):
+class CommentCreateService(BasicService):
     def __init__(self, session: AsyncSession):
         self._session = session
 
