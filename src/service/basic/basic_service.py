@@ -3,7 +3,7 @@ from uuid import UUID
 from custom_select.select import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.model import User, Restaurant
+from db.model import User, Restaurant, Comment
 
 
 class BasicService:
@@ -16,11 +16,10 @@ class BasicService:
         :param user_id: 使用者 ID
         :return: 確認使用者是否存在
         """
-        stmt = select(User).select_from(User).where(User.id == user_id)
+        stmt = select(User).where(User.id == user_id)
         result = await session.execute(stmt)
-        user = result.scalars().one_or_none()
 
-        return True if user else False
+        return result.scalar_one_or_none() is not None
 
     @staticmethod
     async def _check_if_existed_restaurant(session: AsyncSession, restaurant_id: UUID) -> bool:
@@ -32,11 +31,26 @@ class BasicService:
         """
         stmt = (
             select(Restaurant.name)
-            .select_from(Restaurant)
             .where(Restaurant.id == restaurant_id)
         )
 
         result = await session.execute(stmt)
-        restaurant = result.scalar_one_or_none()
 
-        return True if restaurant else False
+        return result.scalar_one_or_none() is not None
+
+    @staticmethod
+    async def _check_if_existed_comment(session: AsyncSession, comment_id: UUID):
+        """
+
+        :param session: 執行資料庫查詢的 session
+        :param comment_id: 評論 ID
+        :return: 確認評論是否存在
+        """
+        stmt = (
+            select(Comment)
+            .where(Comment.id == comment_id)
+        )
+
+        result = await session.execute(stmt)
+
+        return result.scalar_one_or_none() is not None
