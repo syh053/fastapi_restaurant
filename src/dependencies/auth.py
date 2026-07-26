@@ -13,11 +13,11 @@ def check_password(password: bytes, db_password: bytes):
 
 async def get_current_user(session_id: str | None = Cookie(default=None)) -> dict:
     if not session_id:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(status_code=401, detail="未傳入會話")
 
     session = await get_session(session_id)
     if not session:
-        raise HTTPException(status_code=401, detail="Session expired")
+        raise HTTPException(status_code=401, detail="無此會話，或會話過期")
 
     return session
 

@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import Body
 from pydantic import BaseModel, Field, ConfigDict
@@ -17,6 +18,7 @@ class UserGetReqModel(BaseModel):
 
 
 class UserGetRespModel(BaseModel):
+    id: Annotated[UUID, Field(description='使用者 ID')]
     name: Annotated[str, Field(description='使用者姓名')]
     email: Annotated[str, Field(max_length=256, description='email')]
     password: Annotated[str, Body(description='密碼')]

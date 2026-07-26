@@ -1,4 +1,4 @@
-"""create comment table
+"""create comment_router table
 
 Revision ID: 309c6e68162f
 Revises: f379701cb55f
