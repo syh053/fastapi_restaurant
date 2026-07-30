@@ -42,7 +42,11 @@ class GetUser:
             session_id = str(uuid4())
             await create_session(
                 session_id,
-                {"user_id": str(db_user.name), "role": db_user.is_admin},
+                {
+                    "user_id": str(db_user.id),
+                    "user_name": str(db_user.name),
+                    "role": db_user.is_admin
+                },
                 expires=60 * 60 * 6,
             )
             response.set_cookie(
