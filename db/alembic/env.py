@@ -8,6 +8,8 @@ from model_basic.model_basic import BaseModel
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
+import sqlalchemy as sa
+
 top_dir = Path(sys.prefix).resolve().parent
 
 sys.path.append(str(top_dir))
@@ -82,6 +84,10 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
+        # 執行 Migration 前，確保 restaurant schema 存在
+        connection.execute(sa.text("CREATE SCHEMA IF NOT EXISTS restaurant;"))
+        connection.commit()
+
         context.configure(
             connection=connection,
             target_metadata=target_metadata,

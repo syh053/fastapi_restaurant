@@ -5,7 +5,7 @@ from typing import AsyncGenerator
 from configuration.configuration import Configuration
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
-top_dir = Path(sys.prefix).resolve().parent
+top_dir = Path(__file__).resolve().parents[2]
 
 sys.path.append(str(top_dir))
 db_config = Configuration(top_dir / "sys.ini")
