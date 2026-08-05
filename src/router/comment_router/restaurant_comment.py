@@ -29,7 +29,7 @@ async def get_restaurant_comment(
 
 @RESTAURANT_COMMENT_ROUTER.post("", summary="建立餐廳評論", response_model=ResponseModel)
 async def create_restaurant_comment(
-        session_id: Annotated[str, Cookie],
+        session_id: Annotated[str, Cookie()],
         comment: CommentCreateReqModel,
         service: Annotated[CommentCreateService, Depends(get_service(CommentCreateService))]
 ):
