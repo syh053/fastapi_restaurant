@@ -29,7 +29,7 @@ class GetUser:
 
         :param user: 參照 UserGetReqModel
         :param response: 設定 Cookie
-        :return: 無回傳值
+        :return 回傳使用者資訊的 dict
         """
         db_user = await self._get_user_from_db(user.name, as_class=UserGetRespModel)
 
@@ -56,6 +56,7 @@ class GetUser:
                 secure=False,
                 max_age=60 * 60 * 24
             )
+            return db_user.model_dump(exclude={"password"})
         else:
             raise HTTPException(status_code=400, detail="錯誤的使用者名稱或密碼")
 

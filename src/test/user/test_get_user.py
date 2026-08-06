@@ -1,5 +1,6 @@
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID
 
 import pytest
 from database_errors.errors import Missing
@@ -39,14 +40,20 @@ class TestGetUser:
         :param response: 替換為 AsyncMock(spec=Response)
         :return: 無回傳值
         """
-        fake_db_user = UserGetRespModel(name="Ben", email="ben@gmail.com", password="123", is_admin=False)
+        fake_db_user = UserGetRespModel(
+            id=UUID("11111111-1111-1111-1111-111111111111"),
+            name="Ben",
+            email="ben@gmail.com",
+            password="123",
+            is_admin=False
+        )
         service._get_user_from_db = AsyncMock(return_value=fake_db_user)
 
         with (
             mock.patch("src.service.user.get_user.check_password", return_value=True),
             mock.patch("src.service.user.get_user.create_session", new_callable=AsyncMock) as mock_session,
         ):
-            await service.login(user, response)
+            user_data = await service.login(user, response)
 
         # 驗證 _get_user_from_db 是否有被呼叫
         service._get_user_from_db.assert_awaited_once_with(
@@ -62,8 +69,9 @@ class TestGetUser:
 
         assert isinstance(session_id, str)
         assert data == {
-            "user_id": "Ben",
-            "role": False
+            "user_id": str(fake_db_user.id),
+            "user_name": fake_db_user.name,
+            "role": fake_db_user.is_admin,
         }
         assert expires == 60 * 60 * 6
 
@@ -77,6 +85,8 @@ class TestGetUser:
             max_age=60 * 60 * 24
         )
 
+        assert isinstance(user_data, dict)
+
     async def test_login_with_error(self, service: GetUser, user: UserGetReqModel, response: MagicMock):
         """
         將 get_user.py 中的外部函式 check_password 替換成 AsyncMock
@@ -87,7 +97,14 @@ class TestGetUser:
         :param response: 替換為 AsyncMock(spec=Response)
         :return: 無回傳值
         """
-        fake_db_user = UserGetRespModel(name="Ben", email="ben@gmail.com", password="123", is_admin=False)
+        fake_db_user = UserGetRespModel(
+            id=UUID("11111111-1111-1111-1111-111111111111"),
+            name="Ben",
+            email="ben@gmail.com",
+            password="123",
+            is_admin=False
+        )
+
         service._get_user_from_db = AsyncMock(return_value=fake_db_user)
 
         with (

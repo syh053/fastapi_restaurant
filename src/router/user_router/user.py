@@ -41,7 +41,7 @@ async def login(
         data: UserGetReqModel,
         response: Response
 ):
-    await service.login(user=data, response=response)
+    return await service.login(user=data, response=response)
 
 
 @USER_ROUTER.post("/logout", summary="使用者登出")
