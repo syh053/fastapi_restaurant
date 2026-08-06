@@ -1,7 +1,8 @@
 import uuid
+from datetime import datetime
 
 from model_basic.model_basic import BaseModel
-from sqlalchemy import String, Text, Integer, UUID, ForeignKey
+from sqlalchemy import String, Text, Integer, UUID, ForeignKey, DateTime, func
 from sqlalchemy.orm import mapped_column, Mapped
 
 from db.model.category import Category
@@ -23,4 +24,17 @@ class Restaurant(BaseModel):
         ForeignKey(Category.id, ondelete="SET NULL", onupdate="CASCADE"),
         nullable=True,
         comment="分類名稱"
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+        comment="建立時間"
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+        comment="更新時間"
     )
