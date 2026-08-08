@@ -39,7 +39,7 @@ register_exception_handlers(app=app)
 # 設定跨來源請求
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "https://vue-restaurnat.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
