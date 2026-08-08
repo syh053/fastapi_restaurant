@@ -53,8 +53,10 @@ class GetUser:
                 key="session_id",
                 value=session_id,
                 httponly=True,
-                secure=False,
-                max_age=60 * 60 * 24
+                secure=True,
+                samesite="none",
+                max_age=60 * 60 * 24,
+                path="/"
             )
             return db_user.model_dump(exclude={"password"})
         else:
