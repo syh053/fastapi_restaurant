@@ -8,6 +8,11 @@ from pydantic import Field, BaseModel, ConfigDict
 class CommentCreateReqModel(BaseModel):
     text: Annotated[str, Field(max_length=300, description='餐廳評論')]
     restaurant_id: Annotated[uuid.UUID, Field(description='餐廳 ID')]
+    created_at: Annotated[datetime, Field(description="建立時間")]
+    updated_at: Annotated[datetime, Field(description="修改時間")]
+
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CommentGetRespModel(BaseModel):

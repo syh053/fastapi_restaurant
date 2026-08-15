@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from typing import Annotated
 
 from pydantic import BaseModel, Field, ConfigDict
@@ -27,6 +28,8 @@ class EndRestaurantRespModel(BaseModel):
     image: Annotated[str | None, Field(default=None, description='圖片')]
     category_id: Annotated[uuid.UUID | None, Field(default=None, description='餐廳分類')]
     category_name: Annotated[str | None, Field(default=None, description='餐廳分類')]
+    created_at: Annotated[datetime, Field(description='建立時間')]
+    updated_at: Annotated[datetime, Field(description='修改時間')]
 
 
 class EndRestaurantReqModel(BaseModel):
