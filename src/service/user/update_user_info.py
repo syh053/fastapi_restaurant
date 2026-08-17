@@ -7,8 +7,8 @@ from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.model import User
-from dependencies.auth import get_current_user
-from vm.user.user_info_vm import UserInfoUpdateReqModel
+from src.dependencies.auth import get_current_user
+from src.vm.user.user_info_vm import UserInfoUpdateReqModel
 
 FILE_PATH = Path(__file__).resolve().parents[3] / "uploads"
 FILE_PATH.mkdir(parents=True, exist_ok=True)
