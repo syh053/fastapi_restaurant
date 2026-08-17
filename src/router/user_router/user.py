@@ -2,14 +2,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response, Cookie, Query, Form, UploadFile, File, Body
 
-from dependencies.auth import get_current_user
-from service.user.update_user_info import UpdateUserInfoService
+from src.dependencies.auth import get_current_user
+from src.service.user.update_user_info import UpdateUserInfoService
 from src.service.user.add_user import AddUser
 from src.service.user.get_user import GetUser
 from src.service.user.user_info import GetUserInfoService
 from src.tool.service_tool import get_service
 from src.vm.user.user_vm import UserAddReq, UserGetReqModel
-from vm.user.user_info_vm import UserInfoUpdateReqModel
+from src.vm.user.user_info_vm import UserInfoUpdateReqModel
 
 USER_ROUTER = APIRouter(prefix="/user", tags=["使用者"])
 USER_SERVICE = Annotated[GetUser, Depends(get_service(GetUser))]
