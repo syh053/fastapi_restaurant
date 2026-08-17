@@ -46,7 +46,7 @@ async def check_user_existed(
         name: Annotated[str, Query(description="使用者名稱")],
         service: USER_SERVICE
 ):
-    await service.check_user_existed(name=name)
+    return await service.check_user_existed(name=name)
 
 
 @USER_ROUTER.get("/check_email_existed", summary="檢查信箱是否存在")
