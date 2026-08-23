@@ -31,6 +31,7 @@ async def lifespan(_app: FastAPI):
     yield
     logger.info("伺服器已關閉!")
 
+
 app = FastAPI(lifespan=lifespan)
 app.include_router(TOTAL_ROUTER)
 app.mount("/assets", StaticFiles(directory=UPLOAD_DIR), name="static")
@@ -43,7 +44,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "https://vue-restaurnat.onrender.com",
-        "https://vue-restaurant.zeabur.app"
+        "https://vue-restaurant.zeabur.app",
+        "https://bebetterryan.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
