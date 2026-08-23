@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -16,7 +17,7 @@ UPLOAD_DIR = PROJECT_ROOT / "uploads"
 WEB_SERVER_SETTING = {
     "app": "main:app",
     "host": "127.0.0.1",
-    "port": 8888,
+    "port": int(os.environ.get("PORT", 8888)),
     "reload": True,
     "reload_excludes": [".venv"],
 }
