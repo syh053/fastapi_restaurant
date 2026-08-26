@@ -1,11 +1,8 @@
-import logging
 import os
-from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
+from core.fastapi_app import FastAPIApp
 from starlette.staticfiles import StaticFiles
 
 from src.exception_handle.register import register_exception_handlers
@@ -22,35 +19,26 @@ WEB_SERVER_SETTING = {
     "reload_excludes": [".venv"],
 }
 
-logger = logging.getLogger("uvicorn")
+# 定義允許跨域請求的來源名單
+ALLOW_ORIGINS = [
+    "http://localhost:5173",
+    "https://vue-restaurnat.onrender.com",
+    "https://vue-restaurant.zeabur.app",
+    "https://bebetterryan.com",
+]
 
-
-@asynccontextmanager
-async def lifespan(_app: FastAPI):
-    logger.info(f"互動式 API 文件 : http://127.0.0.1:{WEB_SERVER_SETTING['port']}/docs")
-    yield
-    logger.info("伺服器已關閉!")
-
-
-app = FastAPI(lifespan=lifespan)
-app.include_router(TOTAL_ROUTER)
-app.mount("/assets", StaticFiles(directory=UPLOAD_DIR), name="static")
+app = (
+    FastAPIApp(
+        port=WEB_SERVER_SETTING["port"],
+        router=TOTAL_ROUTER,
+        allow_origins=ALLOW_ORIGINS,
+    )
+    .get_app()
+)
 
 register_exception_handlers(app=app)
 
-# 設定跨來源請求
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://vue-restaurnat.onrender.com",
-        "https://vue-restaurant.zeabur.app",
-        "https://bebetterryan.com",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.mount("/assets", StaticFiles(directory=UPLOAD_DIR), name="static")
 
 if __name__ == "__main__":
     uvicorn.run(**WEB_SERVER_SETTING)
