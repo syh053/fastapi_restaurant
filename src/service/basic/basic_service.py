@@ -3,7 +3,7 @@ from uuid import UUID
 from custom_select.select import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.model import User, Restaurant, Comment
+from db.model import User, Restaurant, Comment, MenuItem
 
 
 class BasicService:
@@ -49,6 +49,23 @@ class BasicService:
         stmt = (
             select(Comment)
             .where(Comment.id == comment_id)
+        )
+
+        result = await session.execute(stmt)
+
+        return result.scalar_one_or_none() is not None
+
+    @staticmethod
+    async def _check_if_existed_menu_item(session: AsyncSession, menu_item_id: UUID) -> bool:
+        """
+
+        :param session: 執行資料庫查詢的 session
+        :param menu_item_id: 菜單項目 ID
+        :return: 確認菜單是否存在
+        """
+        stmt = (
+            select(MenuItem)
+            .where(MenuItem.id == menu_item_id)
         )
 
         result = await session.execute(stmt)
