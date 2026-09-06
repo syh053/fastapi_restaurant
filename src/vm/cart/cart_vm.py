@@ -11,6 +11,7 @@ class CartItemReqModel(BaseModel):
 
 
 class CartItemUpdateReqModel(BaseModel):
+    id: Annotated[uuid.UUID, Field(description="購物車品項 ID")]
     quantity: int = Field(ge=1, description="數量")
 
 

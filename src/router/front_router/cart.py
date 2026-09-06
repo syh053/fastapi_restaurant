@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Cookie
+from fastapi import APIRouter, Depends, Query, Cookie, Body
 
 from src.dependencies.auth import get_current_user
 from src.service.front_service.cart.create_cart_item import CartCreateService
@@ -39,29 +39,27 @@ async def add_to_cart(
     return await service.add_to_cart(user_id=UUID(user["user_id"]), item=item, clear_existing=clear_existing)
 
 
-@CART_ROUTER.put("/{cart_item_id}", summary="修改購物車品項數量")
+@CART_ROUTER.put("", summary="修改購物車品項數量")
 async def update_cart_item(
         service: Annotated[CartUpdateService, Depends(get_service(CartUpdateService))],
         user: CURRENT_USER,
-        cart_item_id: UUID,
-        item: CartItemUpdateReqModel
+        item: Annotated[CartItemUpdateReqModel, Body()]
 ):
     return await service.update_quantity(
         user_id=UUID(user["user_id"]),
-        cart_item_id=cart_item_id,
-        quantity=item.quantity
+        item=item
     )
 
-@CART_ROUTER.delete("/{cart_item_id}", summary="移除購物車品項")
+@CART_ROUTER.delete("", summary="移除購物車品項")
 async def remove_cart_item(
         service: Annotated[CartRemoveService, Depends(get_service(CartRemoveService))],
         user: CURRENT_USER,
-        cart_item_id: UUID
+        cart_item_id: Annotated[UUID, Query(description="欲刪除的購物車項目 ID")]
 ):
     return await service.remove_from_cart(user_id=UUID(user["user_id"]), cart_item_id=cart_item_id)
 
 
-@CART_ROUTER.delete("", summary="清空購物車")
+@CART_ROUTER.delete("cart_drop", summary="清空購物車")
 async def clear_cart(
         service: Annotated[CartDropService, Depends(get_service(CartDropService))],
         user: CURRENT_USER
