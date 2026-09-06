@@ -1,9 +1,10 @@
+from uuid import UUID
+
 from custom_select.select import select
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.model import User, Comment, Restaurant
-from src.dependencies.auth import get_current_user
 from src.vm.user.user_info_vm import UserInfoRespModel
 
 
@@ -11,20 +12,16 @@ class GetUserInfoService:
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def get_user_info(self, session_id: str):
+    async def get_user_info(self, user_id: UUID):
         """
         取得使用者資訊、餐廳評論資料，以及評論總數
 
-        :param session_id: 登入者  session_id
+        :param user_id: 使用者 ID
         :return: 回傳使用者資訊以及歷史餐廳評論
         """
-        # 取得目前使用者 ID
-        user_info = await get_current_user(session_id)
-        current_user_id = user_info["user_id"]
-
         restaurant_count = (
             select(func.count(func.distinct(Comment.restaurant_id)))
-            .where(Comment.user_id == current_user_id)
+            .where(Comment.user_id == user_id)
             .scalar_subquery()
         )
 
@@ -36,7 +33,7 @@ class GetUserInfoService:
             )
             .outerjoin(Comment, Comment.user_id == User.id)
             .outerjoin(Restaurant, Restaurant.id == Comment.restaurant_id)
-            .where(User.id == current_user_id)
+            .where(User.id == user_id)
             .distinct(Restaurant.id)
         )
         results = await self._session.execute(stmt)

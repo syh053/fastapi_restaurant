@@ -7,7 +7,6 @@ from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.model import User
-from src.dependencies.auth import get_current_user
 from src.vm.user.user_info_vm import UserInfoUpdateReqModel
 
 FILE_PATH = Path(__file__).resolve().parents[3] / "uploads"
@@ -18,23 +17,20 @@ class UpdateUserInfoService:
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def update_user_info(self, session_id: str, user_info_data: UserInfoUpdateReqModel, ):
+    async def update_user_info(self, user_id: uuid.UUID, user_info_data: UserInfoUpdateReqModel, ):
         """
         變更使用者資訊
 
-        :param: 傳入欲修改的資料內容，請至 UserInfoUpdateReqModel 查看詳細內容
+        :param user_id: 使用者 ID
+        :param user_info_data : 傳入欲修改的資料內容，請至 UserInfoUpdateReqModel 查看詳細內容
         :return: 無回傳直
         """
-        # 取得目前使用者 ID
-        user_info = await get_current_user(session_id)
-        current_user_id = user_info["user_id"]
-
         user_info_data_dict = user_info_data.model_dump(exclude_none=True)
 
         stmt = (
             update(User)
             .values(**user_info_data_dict)
-            .where(User.id == current_user_id)
+            .where(User.id == user_id)
         )
 
         await self._session.execute(stmt)
@@ -44,11 +40,7 @@ class UpdateUserInfoService:
             "message": "資料修改成功!"
         }
 
-    async def update_user_image(self, session_id: str, file: UploadFile | None = None):
-        # 取得目前使用者 ID
-        user_info = await get_current_user(session_id)
-        current_user_id = user_info["user_id"]
-
+    async def update_user_image(self, user_id: uuid.UUID, file: UploadFile | None = None):
         # 檔案處理
         if file:
             file_name = await self._save_file_to_folder(file=file)
@@ -57,7 +49,7 @@ class UpdateUserInfoService:
             stmt = (
                 update(User)
                 .values(image=file_name)
-                .where(User.id == current_user_id)
+                .where(User.id == user_id)
             )
 
             await self._session.execute(stmt)

@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Cookie, Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.openapi.models import Example
 
 from src.dependencies.auth import get_current_user, require_admin
@@ -29,11 +29,11 @@ async def get_restaurant_comment(
 
 @RESTAURANT_COMMENT_ROUTER.post("", summary="建立餐廳評論", response_model=ResponseModel)
 async def create_restaurant_comment(
-        session_id: Annotated[str, Cookie()],
+        user: Annotated[dict, Depends(get_current_user)],
         comment: CommentCreateReqModel,
         service: Annotated[CommentCreateService, Depends(get_service(CommentCreateService))]
 ):
-    return await service.create_comment(session_id=session_id, comment=comment)
+    return await service.create_comment(user_id=UUID(user["user_id"]), comment=comment)
 
 
 @RESTAURANT_COMMENT_ROUTER.delete("", summary="刪除餐廳評論", dependencies=[Depends(require_admin)])
