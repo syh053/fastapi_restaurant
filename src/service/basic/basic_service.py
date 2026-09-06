@@ -7,6 +7,9 @@ from db.model import User, Restaurant, Comment, MenuItem
 
 
 class BasicService:
+    """
+    查詢資料庫資料是否存在，並回傳結果
+    """
     @staticmethod
     async def _check_if_existed_user(session: AsyncSession, user_id: UUID) -> bool:
         """
