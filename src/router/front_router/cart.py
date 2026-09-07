@@ -59,7 +59,7 @@ async def remove_cart_item(
     return await service.remove_from_cart(user_id=UUID(user["user_id"]), cart_item_id=cart_item_id)
 
 
-@CART_ROUTER.delete("cart_drop", summary="清空購物車")
+@CART_ROUTER.delete("/cart_drop", summary="清空購物車")
 async def clear_cart(
         service: Annotated[CartDropService, Depends(get_service(CartDropService))],
         user: CURRENT_USER
