@@ -17,6 +17,7 @@ class GetRestaurant:
             .select_from(Restaurant)
             .outerjoin(Category, Category.id == Restaurant.category_id)
             .where_if(params.name, lambda: Restaurant.name.ilike(f"%{params.name}%"))
+            .where_if(params.category_name, lambda: Category.name.ilike(f"%{params.category_name}%"))
             .where_if(params.tel, lambda: Restaurant.tel.ilike(f"%{params.tel}%"))
             .where_if(params.openingHours, lambda: Restaurant.openingHours.ilike(f"%{params.openingHours}%"))
             .where_if(params.address, lambda: Restaurant.address.ilike(f"%{params.address}%"))
@@ -34,3 +35,12 @@ class GetRestaurant:
         total = results[0][2] if results else 0
 
         return datas, total
+
+    async def get_category(self):
+        stmt = (
+            select(Category)
+        )
+        results = await self._session.execute(stmt)
+        results = results.scalars().all()
+
+        return results
