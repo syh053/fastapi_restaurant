@@ -1,4 +1,5 @@
-from src.tool.ecpay_tool import generate_check_mac_value
+from db.model.database import db_config
+from src.tool.ecpay_tool import generate_check_mac_value, parse_notify_form_body, verify_notify_check_mac_value
 
 
 class TestGenerateCheckMacValue:
@@ -52,3 +53,38 @@ class TestGenerateCheckMacValue:
         mac_value = generate_check_mac_value(params, hash_key="HASHKEY", hash_iv="HASHIV")
         assert len(mac_value) == 64
         assert all(c in "0123456789ABCDEF" for c in mac_value)
+
+
+class TestParseNotifyFormBody:
+    def test_recovers_unencoded_utf8_chinese_value(self):
+        """
+        迴歸測試：綠界回呼的中文欄位（如 RtnMsg）常常不做 percent-encoding，
+        直接把原始 UTF-8 位元組塞進 application/x-www-form-urlencoded body。
+        FastAPI/Starlette 的 request.form() 會用 Latin-1 逐位元組解析，
+        導致中文變亂碼、CheckMacValue 驗證失敗（曾實際在串接測試中發生過）。
+        parse_notify_form_body 要能正確還原這種未編碼的中文欄位。
+        """
+        body = "RtnMsg=交易成功&RtnCode=1&MerchantTradeNo=abc123".encode("utf-8")
+
+        parsed = parse_notify_form_body(body)
+
+        assert parsed["RtnMsg"] == "交易成功"
+        assert parsed["RtnCode"] == "1"
+        assert parsed["MerchantTradeNo"] == "abc123"
+
+    def test_parsed_body_passes_check_mac_value_verification(self, monkeypatch):
+        """
+        端對端驗證：用 parse_notify_form_body 解析出來的參數，
+        重新計算的 CheckMacValue 要跟綠界原本送來的一致（不受中文亂碼影響）。
+        """
+        hash_key, hash_iv = "HASHKEY", "HASHIV"
+        monkeypatch.setitem(db_config["ECPAY"], "hash_key", hash_key)
+        monkeypatch.setitem(db_config["ECPAY"], "hash_iv", hash_iv)
+
+        params = {"RtnMsg": "交易成功", "RtnCode": "1", "MerchantTradeNo": "abc123"}
+        mac_value = generate_check_mac_value(params, hash_key=hash_key, hash_iv=hash_iv)
+        body = f"RtnMsg=交易成功&RtnCode=1&MerchantTradeNo=abc123&CheckMacValue={mac_value}".encode("utf-8")
+
+        parsed = parse_notify_form_body(body)
+
+        assert verify_notify_check_mac_value(parsed) is True

@@ -1,6 +1,6 @@
 import hashlib
 from datetime import datetime
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, parse_qsl
 
 from db.model import Order, OrderItem
 from db.model.database import db_config
@@ -78,3 +78,15 @@ def build_aio_checkout_params(order: Order, items: list[OrderItem]) -> dict:
 
 def get_action_url() -> str:
     return db_config["ECPAY"]["action_url"]
+
+
+def parse_notify_form_body(body: bytes) -> dict:
+    """
+    解析綠界 Server 端回呼的 application/x-www-form-urlencoded body。
+
+    綠界的中文欄位（如 RtnMsg）常常沒有做 percent-encoding，直接塞原始 UTF-8 位元組，
+    FastAPI/Starlette 的 request.form() 會用 Latin-1 逐位元組解析而產生亂碼，
+    導致 CheckMacValue 驗證失敗。這裡改成先把整段 body 當 UTF-8 文字解碼，再用
+    parse_qsl 拆解，才能正確還原中文欄位內容。
+    """
+    return dict(parse_qsl(body.decode("utf-8"), keep_blank_values=True))
