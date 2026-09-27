@@ -6,7 +6,7 @@ from uuid import UUID
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.service.end_service.restaurant import GetRestaurant
+from src.service.front_service.restaurant import GetRestaurant
 from src.vm.end.restaurant_vm import EndRestaurantGetReqModel, EndRestaurantRespModel
 
 RESTAURANT_ID = UUID("22222222-2222-2222-2222-222222222222")
@@ -36,7 +36,12 @@ def _category(**overrides) -> SimpleNamespace:
     return SimpleNamespace(**data)
 
 
-class TestGetRestaurant:
+class TestFrontGetRestaurant:
+    """
+    前台餐廳查詢 GetRestaurant（src/service/front_service/restaurant.py），
+    與 end_service 中同名的 GetRestaurant 為不同類別，需分開測試。
+    """
+
     @pytest.fixture
     def mock_session(self) -> AsyncMock:
         session = MagicMock(spec=AsyncSession)
@@ -64,13 +69,12 @@ class TestGetRestaurant:
             self, service: GetRestaurant, mock_session: AsyncMock, empty_params: EndRestaurantGetReqModel
     ):
         execute_result = MagicMock()
-        execute_result.all.return_value = [(_restaurant(), "小吃", 1)]
+        execute_result.fetchall.return_value = [(_restaurant(), "小吃", 1)]
         mock_session.execute.return_value = execute_result
 
         datas, total = await service.get_all_restaurant(empty_params)
 
         mock_session.execute.assert_awaited_once()
-        assert isinstance(datas, list)
         assert isinstance(datas[0], EndRestaurantRespModel)
         assert datas[0].category_name == "小吃"
         assert total == 1
@@ -79,34 +83,13 @@ class TestGetRestaurant:
             self, service: GetRestaurant, mock_session: AsyncMock, empty_params: EndRestaurantGetReqModel
     ):
         execute_result = MagicMock()
-        execute_result.all.return_value = []
+        execute_result.fetchall.return_value = []
         mock_session.execute.return_value = execute_result
 
         datas, total = await service.get_all_restaurant(empty_params)
 
         assert datas == []
         assert total == 0
-
-    async def test_get_all_restaurant_with_all_filters(self, service: GetRestaurant, mock_session: AsyncMock):
-        execute_result = MagicMock()
-        execute_result.all.return_value = [(_restaurant(), "小吃", 1)]
-        mock_session.execute.return_value = execute_result
-
-        params = EndRestaurantGetReqModel(
-            name="玉堂春",
-            category_name="小吃",
-            tel="04",
-            openingHours=6,
-            address="臺中",
-            description="魯肉飯",
-            current_page=2,
-            page_size=5
-        )
-        datas, total = await service.get_all_restaurant(params)
-
-        mock_session.execute.assert_awaited_once()
-        assert len(datas) == 1
-        assert total == 1
 
     async def test_get_category(self, service: GetRestaurant, mock_session: AsyncMock):
         execute_result = MagicMock()
@@ -117,12 +100,3 @@ class TestGetRestaurant:
 
         mock_session.execute.assert_awaited_once()
         assert list(results) == [_category()]
-
-    async def test_get_category_empty(self, service: GetRestaurant, mock_session: AsyncMock):
-        execute_result = MagicMock()
-        execute_result.scalars.return_value.all.return_value = []
-        mock_session.execute.return_value = execute_result
-
-        results = await service.get_category()
-
-        assert list(results) == []

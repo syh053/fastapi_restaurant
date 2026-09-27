@@ -6,8 +6,11 @@ import pytest
 from database_errors.errors import Duplicate, Missing
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.service.front_service.cart.get_cart import CRUDCartService
-from src.vm.cart.cart_vm import CartItemReqModel, CartRespModel
+from src.service.front_service.cart.create_cart_item import CartCreateService
+from src.service.front_service.cart.drop_cart import CartDropService
+from src.service.front_service.cart.remove_cart_item import CartRemoveService
+from src.service.front_service.cart.update_cart_item import CartUpdateService
+from src.vm.cart.cart_vm import CartItemReqModel, CartItemUpdateReqModel, CartRespModel
 
 USER_ID = UUID("11111111-1111-1111-1111-111111111111")
 RESTAURANT_ID = UUID("22222222-2222-2222-2222-222222222222")
@@ -28,24 +31,23 @@ def _cart_item(**overrides) -> SimpleNamespace:
     return SimpleNamespace(**data)
 
 
-class TestCRUDCartService:
-    @pytest.fixture
-    def mock_session(self) -> AsyncMock:
-        session = MagicMock(spec=AsyncSession)
-        session.execute = AsyncMock()
-        return session
+def _mock_session() -> MagicMock:
+    session = MagicMock(spec=AsyncSession)
+    session.execute = AsyncMock()
+    return session
 
+
+FAKE_CART_RESPONSE = {"code": 200, "message": "查詢購物車成功!", "data": CartRespModel(items=[], total=0)}
+
+
+class TestCartCreateService:
     @pytest.fixture
-    def service(self, mock_session: AsyncMock) -> CRUDCartService:
-        svc = CRUDCartService(mock_session)
-        svc._get_service.get_cart_response = AsyncMock(
-            return_value={"code": 200, "message": "查詢購物車成功!", "data": CartRespModel(items=[], total=0)}
-        )
+    def service(self) -> CartCreateService:
+        svc = CartCreateService(_mock_session())
+        svc.get_cart_response = AsyncMock(return_value=dict(FAKE_CART_RESPONSE))
         return svc
 
-    # --- add_to_cart ---
-
-    async def test_add_new_item(self, service: CRUDCartService):
+    async def test_add_new_item(self, service: CartCreateService):
         service._get_menu_item = AsyncMock(return_value=_menu_item())
         service._get_cart_restaurant_id = AsyncMock(return_value=None)
         service._get_cart_item_by_menu = AsyncMock(return_value=None)
@@ -59,7 +61,7 @@ class TestCRUDCartService:
         assert result["code"] == 200
         assert isinstance(result["data"], CartRespModel)
 
-    async def test_add_existing_item_merges_quantity(self, service: CRUDCartService):
+    async def test_add_existing_item_merges_quantity(self, service: CartCreateService):
         service._get_menu_item = AsyncMock(return_value=_menu_item())
         service._get_cart_restaurant_id = AsyncMock(return_value=RESTAURANT_ID)
         service._get_cart_item_by_menu = AsyncMock(return_value=_cart_item(quantity=2))
@@ -71,7 +73,7 @@ class TestCRUDCartService:
         assert "UPDATE restaurant.cart" in stmt
         assert service._session.execute.call_args[0][0].compile().params["quantity"] == 5  # type: ignore
 
-    async def test_add_menu_item_missing(self, service: CRUDCartService):
+    async def test_add_menu_item_missing(self, service: CartCreateService):
         service._get_menu_item = AsyncMock(return_value=None)
 
         item = CartItemReqModel(menu_item_id=MENU_ITEM_ID, quantity=1)
@@ -80,7 +82,7 @@ class TestCRUDCartService:
 
         service._session.execute.assert_not_awaited()  # type: ignore
 
-    async def test_add_conflict_different_restaurant(self, service: CRUDCartService):
+    async def test_add_conflict_different_restaurant(self, service: CartCreateService):
         service._get_menu_item = AsyncMock(return_value=_menu_item(restaurant_id=RESTAURANT_ID))
         service._get_cart_restaurant_id = AsyncMock(return_value=OTHER_RESTAURANT_ID)
 
@@ -90,7 +92,7 @@ class TestCRUDCartService:
 
         service._session.execute.assert_not_awaited()  # type: ignore
 
-    async def test_add_conflict_clears_existing_when_requested(self, service: CRUDCartService):
+    async def test_add_conflict_clears_existing_when_requested(self, service: CartCreateService):
         service._get_menu_item = AsyncMock(return_value=_menu_item(restaurant_id=RESTAURANT_ID))
         service._get_cart_restaurant_id = AsyncMock(return_value=OTHER_RESTAURANT_ID)
         service._get_cart_item_by_menu = AsyncMock(return_value=None)
@@ -104,27 +106,41 @@ class TestCRUDCartService:
         assert "DELETE FROM restaurant.cart" in delete_stmt
         assert "INSERT INTO restaurant.cart" in insert_stmt
 
-    # --- update_quantity ---
 
-    async def test_update_quantity(self, service: CRUDCartService):
+class TestCartUpdateService:
+    @pytest.fixture
+    def service(self) -> CartUpdateService:
+        svc = CartUpdateService(_mock_session())
+        svc.get_cart_response = AsyncMock(return_value=dict(FAKE_CART_RESPONSE))
+        return svc
+
+    async def test_update_quantity(self, service: CartUpdateService):
         service._get_cart_item_by_id = AsyncMock(return_value=_cart_item())
 
-        result = await service.update_quantity(user_id=USER_ID, cart_item_id=CART_ITEM_ID, quantity=5)
+        item = CartItemUpdateReqModel(id=CART_ITEM_ID, quantity=5)
+        result = await service.update_quantity(user_id=USER_ID, item=item)
 
         service._session.execute.assert_awaited_once()  # type: ignore
         assert result["code"] == 200
 
-    async def test_update_quantity_missing(self, service: CRUDCartService):
+    async def test_update_quantity_missing(self, service: CartUpdateService):
         service._get_cart_item_by_id = AsyncMock(return_value=None)
 
+        item = CartItemUpdateReqModel(id=CART_ITEM_ID, quantity=5)
         with pytest.raises(Missing):
-            await service.update_quantity(user_id=USER_ID, cart_item_id=CART_ITEM_ID, quantity=5)
+            await service.update_quantity(user_id=USER_ID, item=item)
 
         service._session.execute.assert_not_awaited()  # type: ignore
 
-    # --- remove_from_cart ---
 
-    async def test_remove_from_cart(self, service: CRUDCartService):
+class TestCartRemoveService:
+    @pytest.fixture
+    def service(self) -> CartRemoveService:
+        svc = CartRemoveService(_mock_session())
+        svc.get_cart_response = AsyncMock(return_value=dict(FAKE_CART_RESPONSE))
+        return svc
+
+    async def test_remove_from_cart(self, service: CartRemoveService):
         service._get_cart_item_by_id = AsyncMock(return_value=_cart_item())
 
         result = await service.remove_from_cart(user_id=USER_ID, cart_item_id=CART_ITEM_ID)
@@ -132,7 +148,7 @@ class TestCRUDCartService:
         service._session.execute.assert_awaited_once()  # type: ignore
         assert result["code"] == 200
 
-    async def test_remove_from_cart_missing(self, service: CRUDCartService):
+    async def test_remove_from_cart_missing(self, service: CartRemoveService):
         service._get_cart_item_by_id = AsyncMock(return_value=None)
 
         with pytest.raises(Missing):
@@ -140,7 +156,7 @@ class TestCRUDCartService:
 
         service._session.execute.assert_not_awaited()  # type: ignore
 
-    async def test_remove_from_cart_not_owned(self, service: CRUDCartService):
+    async def test_remove_from_cart_not_owned(self, service: CartRemoveService):
         """不屬於該使用者的購物車品項應視為不存在（避免洩漏其他使用者的購物車內容）"""
         service._get_cart_item_by_id = AsyncMock(return_value=None)
 
@@ -149,9 +165,13 @@ class TestCRUDCartService:
 
         service._session.execute.assert_not_awaited()  # type: ignore
 
-    # --- clear_cart ---
 
-    async def test_clear_cart(self, service: CRUDCartService):
+class TestCartDropService:
+    @pytest.fixture
+    def service(self) -> CartDropService:
+        return CartDropService(_mock_session())
+
+    async def test_clear_cart(self, service: CartDropService):
         result = await service.clear_cart(user_id=USER_ID)
 
         service._session.execute.assert_awaited_once()  # type: ignore

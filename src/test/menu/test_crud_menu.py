@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 import pytest
 from database_errors.errors import Duplicate, Missing
-from fastapi import UploadFile
+from fastapi import HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.service.end_service.menu_crud import CRUDMenuService
@@ -176,3 +176,32 @@ class TestCRUDMenuService:
             await service.delete_menu(menu_item_id_list=[uuid4(), uuid4(), uuid4()])
 
         service._session.execute.assert_not_awaited()  # type: ignore
+
+    # --- _save_file_to_folder ---
+
+    @pytest.fixture
+    def patched_menu_path(self, tmp_path, monkeypatch):
+        import src.service.end_service.menu_crud as module
+        monkeypatch.setattr(module, "menu_path", tmp_path)
+        return tmp_path
+
+    async def test_save_file_to_folder(self, service: CRUDMenuService, mock_file: MagicMock, patched_menu_path):
+        mock_file.read = AsyncMock(side_effect=[b"content", b""])
+        mock_file.close = AsyncMock()
+
+        await service._save_file_to_folder(file=mock_file)
+
+        assert (patched_menu_path / mock_file.filename).exists()
+        mock_file.close.assert_awaited_once()
+
+    async def test_save_file_to_folder_write_failure(
+            self, service: CRUDMenuService, mock_file: MagicMock, patched_menu_path
+    ):
+        mock_file.read = AsyncMock(side_effect=OSError("disk full"))
+        mock_file.close = AsyncMock()
+
+        with pytest.raises(HTTPException) as exc_info:
+            await service._save_file_to_folder(file=mock_file)
+
+        assert exc_info.value.status_code == 500
+        mock_file.close.assert_awaited_once()

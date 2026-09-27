@@ -129,3 +129,41 @@ class TestGetUser:
 
         with pytest.raises(Missing):
             await service.login(user, response)
+
+    async def test_logout_with_session(self, response: MagicMock):
+        with mock.patch("src.service.user.get_user.delete_session", new_callable=AsyncMock) as mock_delete_session:
+            await GetUser.logout(response, session_id="abc")
+
+        mock_delete_session.assert_awaited_once_with("abc")
+        response.delete_cookie.assert_called_once_with("session_id")
+
+    async def test_logout_without_session(self, response: MagicMock):
+        with mock.patch("src.service.user.get_user.delete_session", new_callable=AsyncMock) as mock_delete_session:
+            await GetUser.logout(response, session_id=None)
+
+        mock_delete_session.assert_not_awaited()
+        response.delete_cookie.assert_called_once_with("session_id")
+
+    async def test_check_user_existed_true(self, service: GetUser):
+        """使用者已存在時，check_user_existed 應回傳 False（代表無法再次使用該名稱）"""
+        service._get_user_from_db = AsyncMock(return_value=MagicMock())
+
+        assert await service.check_user_existed("Ben") is False
+
+    async def test_check_user_existed_false(self, service: GetUser):
+        """使用者不存在時，check_user_existed 應回傳 True"""
+        service._get_user_from_db = AsyncMock(return_value=None)
+
+        assert await service.check_user_existed("Ben") is True
+
+    async def test_check_email_existed_true(self, service: GetUser):
+        """信箱已註冊時，check_email_existed 應回傳 False"""
+        service._get_email_existed = AsyncMock(return_value=True)
+
+        assert await service.check_email_existed("ben@gmail.com") is False
+
+    async def test_check_email_existed_false(self, service: GetUser):
+        """信箱未註冊時，check_email_existed 應回傳 True"""
+        service._get_email_existed = AsyncMock(return_value=False)
+
+        assert await service.check_email_existed("ben@gmail.com") is True

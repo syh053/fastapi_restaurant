@@ -5,7 +5,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.service.front_service.cart.get_cart import GetCartService
+from src.service.front_service.cart.get_cart import CartGetService
 from src.vm.cart.cart_vm import CartItemRespModel, CartRespModel
 
 USER_ID = UUID("11111111-1111-1111-1111-111111111111")
@@ -36,12 +36,12 @@ def _cart_row(**overrides) -> SimpleNamespace:
 
 class TestGetCartService:
     @staticmethod
-    def _service(rows: list) -> GetCartService:
+    def _service(rows: list) -> CartGetService:
         session = MagicMock(spec=AsyncSession)
         execute_result = MagicMock()
         execute_result.all.return_value = rows
         session.execute = AsyncMock(return_value=execute_result)
-        return GetCartService(session)
+        return CartGetService(session)
 
     async def test_get_cart(self):
         rows = [
