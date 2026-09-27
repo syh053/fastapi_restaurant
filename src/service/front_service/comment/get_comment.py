@@ -3,6 +3,7 @@ from uuid import UUID
 
 from custom_select.select import select
 from pydantic import BaseModel
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.model import Comment, User, Restaurant
@@ -24,14 +25,14 @@ class CommentGetService:
         stmt = (
             select(
                 Restaurant.name.label("restaurant_name"),
-                User.name.label("user_name"),
+                func.coalesce(User.name, "使用者已刪除").label("user_name"),
                 Comment.id.label("comment_id"),
                 Comment.text.label("comment"),
                 Comment.created_at,
                 Comment.updated_at,
             )
             .join(Comment, Comment.restaurant_id == Restaurant.id)
-            .join(User, User.id == Comment.user_id)
+            .outerjoin(User, User.id == Comment.user_id)
             .where(Restaurant.id == restaurant_id)
             .order_by(Comment.created_at.desc())
         )

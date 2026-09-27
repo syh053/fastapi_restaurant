@@ -14,16 +14,16 @@ class Comment(BaseModel):
     __table_args__ = SCHEMA
 
     text: Mapped[str] = mapped_column(Text, nullable=False, comment="餐廳評論")
-    restaurant_id: Mapped[uuid.UUID] = mapped_column(
+    restaurant_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID,
         ForeignKey("restaurant.restaurant.id", ondelete="SET NULL", onupdate="CASCADE"),
-        nullable=False,
+        nullable=True,
         comment="餐廳 ID"
     )
-    user_id: Mapped[uuid.UUID] = mapped_column(
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID,
         ForeignKey("restaurant.user.id", ondelete="SET NULL", onupdate="CASCADE"),
-        nullable=False,
+        nullable=True,
         comment="使用者 ID"
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(
