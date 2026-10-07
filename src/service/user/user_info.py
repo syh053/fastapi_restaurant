@@ -54,7 +54,7 @@ class GetUserInfoService:
             name=user.name,
             email=user.email,
             image=user.image,
-            is_admin=user.is_admin,
+            role=user.role,
             restaurants=[restaurant for restaurant in restaurants],
             comments_total=results[0][2]
         )

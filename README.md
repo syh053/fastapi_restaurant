@@ -60,19 +60,20 @@ uv run python src/main.py
 
 | Method | Path | 說明 | 驗證 |
 | --- | --- | --- | --- |
-| GET | `/end/restaurant/all` | 查詢餐廳列表 | 管理員 |
-| GET | `/end/restaurant/category` | 查詢餐廳分類 | 管理員 |
-| POST | `/end/restaurant` | 新增餐廳 | 管理員 |
-| PUT | `/end/restaurant` | 更新餐廳 | 管理員 |
-| DELETE | `/end/restaurant` | 刪除餐廳 | 管理員 |
+| GET | `/end/restaurant/all` | 查詢餐廳列表 | 超級管理員／業者(業者僅限自己的餐廳) |
+| GET | `/end/restaurant/category` | 查詢餐廳分類 | 超級管理員／業者(業者僅限自己的餐廳) |
+| POST | `/end/restaurant` | 新增餐廳 | 超級管理員／業者(業者僅限自己的餐廳) |
+| PUT | `/end/restaurant` | 更新餐廳 | 超級管理員／業者(業者僅限自己的餐廳) |
+| DELETE | `/end/restaurant` | 刪除餐廳 | 超級管理員／業者(業者僅限自己的餐廳) |
 
 ### 後台使用者 API
 
 | Method | Path | 說明 | 驗證 |
 | --- | --- | --- | --- |
-| GET | `/end/user/all` | 查詢使用者列表 | 管理員 |
-| PUT | `/end/user/update_access` | 更新使用者管理員權限 | 管理員 |
-| DELETE | `/end/user` | 刪除使用者 | 管理員 |
+| GET | `/end/user/all` | 查詢使用者列表 | 超級管理員 |
+| PUT | `/end/user/update_access` | 變更使用者角色(user / owner / super_admin) | 超級管理員 |
+| DELETE | `/end/user` | 刪除使用者 | 超級管理員 |
+| GET | `/end/revenue` | 業者營業額(總額、訂單數、依日期、各餐廳小計;只計已付款訂單,可帶 `start_date`/`end_date`/`restaurant_id`) | 僅業者 |
 
 ### 一般使用者 API
 
@@ -88,7 +89,8 @@ uv run python src/main.py
 
 - 登入成功後，系統會寫入 `session_id` cookie
 - Session 資料儲存在 Redis
-- 後台 API 需要管理員權限
+- 角色分為 `user`(一般使用者)、`owner`(業者)、`super_admin`(超級管理員);註冊可選 `user`/`owner`,超級管理員由超管指派
+- 後台使用者管理需超級管理員;餐廳/菜單後台需超級管理員或業者(業者僅能操作自己名下);營業額僅業者可看
 - 前台餐廳查詢與登入後的 session 驗證也依賴 `session_id`
 
 ## 回傳格式

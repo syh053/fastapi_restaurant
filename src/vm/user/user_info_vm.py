@@ -11,7 +11,7 @@ class UserInfoRespModel(BaseModel):
     name: Annotated[str, Field(description='使用者姓名')]
     email: Annotated[str, Field(max_length=256, description='email')]
     image: Annotated[str | None, Field(default=None, description='使用者大頭貼')]
-    is_admin: Annotated[bool, Field(description='是否為管理員')]
+    role: Annotated[str, Field(description='角色')]
     restaurants: list[EndRestaurantRespModel]
     comments_total: int
 

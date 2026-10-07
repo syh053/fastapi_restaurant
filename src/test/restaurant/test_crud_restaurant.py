@@ -95,7 +95,7 @@ class TestCrudRestaurant:
         )
 
         service._save_file_to_folder.assert_awaited_once_with(file=mock_file)
-        service._check_if_existed_restaurant.assert_awaited_once_with("玉堂春魯肉飯")
+        service._check_if_existed_restaurant.assert_awaited_once_with("玉堂春魯肉飯", None)
 
         service._session.execute.assert_awaited_once()  # type: ignore
 
@@ -121,7 +121,7 @@ class TestCrudRestaurant:
             )
 
         service._save_file_to_folder.assert_awaited_once_with(file=mock_file)
-        service._check_if_existed_restaurant.assert_awaited_once_with("玉堂春魯肉飯")
+        service._check_if_existed_restaurant.assert_awaited_once_with("玉堂春魯肉飯", None)
 
         # 不會進 DB 操作
         service._session.execute.assert_not_awaited()  # type: ignore

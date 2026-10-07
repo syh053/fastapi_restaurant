@@ -1,6 +1,6 @@
 """種子資料腳本
 
-一次灌入一組固定的繁體中文範例資料（分類／使用者／餐廳／菜單／評論），
+一次灌入一組固定的繁體中文範例資料（分類／使用者／餐廳／菜單／評論／訂單），
 方便開發、demo 與分頁／排序功能的驗證。
 
 用法：
@@ -11,16 +11,18 @@
 """
 import asyncio
 import sys
+import random
 import uuid
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 # 讓 `python db/seed.py` 能 import db.model.*（把 repo root 加進 sys.path）
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import bcrypt
-from sqlalchemy import select, text
+from sqlalchemy import select, text, update
 
-from db.model import Comment, MenuItem, Restaurant, User
+from db.model import Comment, MenuItem, Order, OrderItem, Restaurant, User
 from db.model.category import Category
 from db.model.database import AsyncSessionLocal
 
@@ -39,13 +41,30 @@ CATEGORIES = ["預設分類", "台式小吃", "日式料理", "義式餐廳", "�
 # --- 使用者 ----------------------------------------------------------------
 
 USERS = [
-    {"name": "admin", "email": "admin@test.com", "password": "123", "is_admin": True},
-    {"name": "Sindy", "email": "sindy@test.com", "password": "123", "is_admin": False},
-    {"name": "Ken", "email": "ken@test.com", "password": "123", "is_admin": False},
-    {"name": "Amy", "email": "amy@test.com", "password": "123", "is_admin": False},
-    {"name": "John", "email": "john@test.com", "password": "123", "is_admin": False},
-    {"name": "Jane", "email": "jane@test.com", "password": "123", "is_admin": False},
+    {"name": "admin", "email": "admin@test.com", "password": "123", "role": "super_admin"},
+    {"name": "Sindy", "email": "sindy@test.com", "password": "123", "role": "user"},
+    {"name": "Ken", "email": "ken@test.com", "password": "123", "role": "user"},
+    {"name": "Amy", "email": "amy@test.com", "password": "123", "role": "user"},
+    {"name": "John", "email": "john@test.com", "password": "123", "role": "user"},
+    {"name": "Jane", "email": "jane@test.com", "password": "123", "role": "user"},
+    # 業者：加在最後，避免影響 COMMENTS 以位置取用使用者的 index
+    {"name": "owner1", "email": "owner1@test.com", "password": "123", "role": "owner"},
+    {"name": "owner2", "email": "owner2@test.com", "password": "123", "role": "owner"},
 ]
+
+# 餐廳 -> 所屬業者（未列出的餐廳不指定業者）
+OWNER_BY_RESTAURANT = {
+    "玉堂春魯肉飯": "owner1",
+    "李海魯肉飯": "owner1",
+    "財神爺魯肉飯": "owner1",
+    "一蘭拉麵 台中店": "owner1",
+    "藏壽司 秀泰站前店": "owner1",
+    "和心屋丼飯": "owner2",
+    "薩莉亞 台中中港店": "owner2",
+    "拿坡里窯烤披薩": "owner2",
+    "五郎漢堡 Goro Burger": "owner2",
+    "麻吉茶飲": "owner2",
+}
 
 
 # --- 餐廳 -----------------------------------------------------------------
@@ -242,6 +261,71 @@ COMMENTS = [
 ]
 
 
+# --- 訂單 -----------------------------------------------------------------
+
+# 訂單筆數、涵蓋的天數（由今天往前推）；以固定亂數種子產生，每次內容一致
+ORDER_COUNT = 80
+ORDER_DAYS = 30
+# 訂單狀態權重：多數為已付款，營業額頁才有資料可看
+ORDER_STATUS_WEIGHTS = {"paid": 70, "pending": 5, "failed": 3, "cancelled": 2}
+# 只有一般使用者（USERS 的 1~5）會下單
+ORDER_USER_NAMES = [u["name"] for u in USERS if u["role"] == "user"]
+
+
+def _trade_no(index: int) -> str:
+    """產生固定的特店交易編號（唯一鍵，同時用來判斷是否已灌過）"""
+    return f"SEED{index:06d}"
+
+
+def _build_orders(
+        user_id: dict[str, uuid.UUID],
+        menu_by_restaurant: dict[uuid.UUID, list[tuple[uuid.UUID, str, int]]],
+        existing_trade_no: set[str],
+) -> tuple[list[Order], list[OrderItem]]:
+    """
+    依固定亂數種子產生訂單與明細。一張訂單只屬於一間餐廳，
+    餐點取自該餐廳菜單，金額 = 明細小計加總；已存在的交易編號略過。
+    """
+    rng = random.Random(20260101)
+    now = datetime.now(timezone.utc)
+    restaurant_ids = list(menu_by_restaurant)
+    statuses = list(ORDER_STATUS_WEIGHTS)
+    weights = list(ORDER_STATUS_WEIGHTS.values())
+
+    orders: list[Order] = []
+    items: list[OrderItem] = []
+    for i in range(1, ORDER_COUNT + 1):
+        # 不論是否略過，都要照順序消耗亂數，確保每張訂單的內容固定
+        rid = rng.choice(restaurant_ids)
+        uid = user_id[rng.choice(ORDER_USER_NAMES)]
+        status = rng.choices(statuses, weights)[0]
+        created_at = now - timedelta(days=rng.randint(0, ORDER_DAYS - 1), minutes=rng.randint(0, 24 * 60 - 1))
+        picks = rng.sample(menu_by_restaurant[rid], k=min(rng.randint(1, 4), len(menu_by_restaurant[rid])))
+        quantities = [rng.randint(1, 3) for _ in picks]
+
+        trade_no = _trade_no(i)
+        if trade_no in existing_trade_no:
+            continue
+
+        order_id = uuid.uuid4()
+        total = 0
+        for (menu_id, name, price), qty in zip(picks, quantities):
+            total += price * qty
+            items.append(OrderItem(
+                id=uuid.uuid4(), order_id=order_id, menu_item_id=menu_id,
+                name=name, unit_price=price, quantity=qty, subtotal=price * qty,
+            ))
+        paid = status == "paid"
+        orders.append(Order(
+            id=order_id, user_id=uid, restaurant_id=rid, status=status, total_amount=total,
+            merchant_trade_no=trade_no,
+            ecpay_trade_no=f"SEED{i:010d}" if paid else None,
+            payment_date=created_at + timedelta(minutes=3) if paid else None,
+            created_at=created_at, updated_at=created_at,
+        ))
+    return orders, items
+
+
 async def seed(reset: bool) -> None:
     """
     灌入種子資料。
@@ -255,7 +339,7 @@ async def seed(reset: bool) -> None:
     async with AsyncSessionLocal() as session:
         if reset:
             await session.execute(text(
-                'TRUNCATE restaurant.menu_item, restaurant.comment, '
+                'TRUNCATE restaurant.order_item, restaurant."order", restaurant.menu_item, restaurant.comment, '
                 'restaurant.restaurant, restaurant."user", restaurant.category '
                 'RESTART IDENTITY CASCADE'
             ))
@@ -290,7 +374,7 @@ async def seed(reset: bool) -> None:
                     name=u["name"],
                     email=u["email"],
                     password=_hash(u["password"]),
-                    is_admin=u["is_admin"],
+                    role=u["role"],
                 )
                 new_users.append(obj)
                 user_id[u["name"]] = obj.id
@@ -313,6 +397,7 @@ async def seed(reset: bool) -> None:
                     address=r["address"],
                     description=r["description"],
                     category_id=category_id[r["category"]],
+                    owner_id=user_id.get(OWNER_BY_RESTAURANT.get(r["name"])),
                 )
                 new_restaurants.append(obj)
                 restaurant_id[r["name"]] = obj.id
@@ -370,8 +455,33 @@ async def seed(reset: bool) -> None:
         session.add_all(new_users)
         session.add_all(new_restaurants)
         await session.flush()
+        # 既有餐廳若尚未指定業者，補上 owner_id（已有業者的不覆蓋）
+        backfilled = 0
+        for name, owner in OWNER_BY_RESTAURANT.items():
+            if name in existing_restaurant:
+                result = await session.execute(
+                    update(Restaurant)
+                    .where(Restaurant.id == existing_restaurant[name], Restaurant.owner_id.is_(None))
+                    .values(owner_id=user_id[owner])
+                )
+                backfilled += result.rowcount
+
         session.add_all(new_menu_items)
         session.add_all(new_comments)
+        await session.flush()
+
+        # --- 訂單（以 merchant_trade_no 判斷是否重複；需在菜單寫入後才查得到餐點）---
+        existing_trade_no = set((await session.execute(select(Order.merchant_trade_no))).scalars().all())
+        menu_by_restaurant: dict[uuid.UUID, list[tuple[uuid.UUID, str, int]]] = {}
+        for mid, rid, name, price in (await session.execute(
+                select(MenuItem.id, MenuItem.restaurant_id, MenuItem.name, MenuItem.price)
+        )).all():
+            if rid in restaurant_id.values():
+                menu_by_restaurant.setdefault(rid, []).append((mid, name, price))
+        new_orders, new_order_items = _build_orders(user_id, menu_by_restaurant, existing_trade_no)
+        session.add_all(new_orders)
+        await session.flush()
+        session.add_all(new_order_items)
         await session.commit()
 
         def _report(label: str, added: int, total: int) -> str:
@@ -381,11 +491,13 @@ async def seed(reset: bool) -> None:
         print("  " + _report("分類", len(new_categories), len(CATEGORIES)))
         print("  " + _report("使用者", len(new_users), len(USERS)))
         print("  " + _report("餐廳", len(new_restaurants), len(RESTAURANTS)))
+        print(f"  既有餐廳補上業者 {backfilled} 間")
         print("  " + _report(
             "菜單", len(new_menu_items),
             sum(len(v) for v in MENU_BY_RESTAURANT.values()),
         ))
         print("  " + _report("評論", len(new_comments), len(COMMENTS)))
+        print("  " + _report("訂單", len(new_orders), ORDER_COUNT) + f"，明細 +{len(new_order_items)}")
 
 
 if __name__ == "__main__":

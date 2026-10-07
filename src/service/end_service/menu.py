@@ -1,3 +1,5 @@
+import uuid
+
 from custom_select.select import select
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,11 +12,16 @@ class GetMenuService:
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def get_all_menu(self, params: MenuGetReqModel) -> tuple[list[MenuRespModel], int]:
+    async def get_all_menu(
+            self,
+            params: MenuGetReqModel,
+            owner_id: uuid.UUID | None = None
+    ) -> tuple[list[MenuRespModel], int]:
         """
         取得餐點列表
 
         :param params: 查詢與分頁參數
+        :param owner_id: 業者 ID，傳入時僅查詢該業者名下餐廳的餐點；None 代表不限制(超級管理員)
         :return: (餐點列表, 總筆數)
         """
         stmt = (
@@ -25,6 +32,7 @@ class GetMenuService:
             )
             .select_from(MenuItem)
             .outerjoin(Restaurant, Restaurant.id == MenuItem.restaurant_id)
+            .where_if(owner_id, lambda: Restaurant.owner_id == owner_id)
             .where_if(params.name, lambda: MenuItem.name.ilike(f"%{params.name}%"))
             .where_if(params.section, lambda: MenuItem.section.ilike(f"%{params.section}%"))
             .where_if(params.restaurant_id, lambda: MenuItem.restaurant_id == params.restaurant_id)

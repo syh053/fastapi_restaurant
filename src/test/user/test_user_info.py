@@ -15,7 +15,7 @@ OTHER_RESTAURANT_ID = UUID("33333333-3333-3333-3333-333333333333")
 
 
 def _user(**overrides) -> SimpleNamespace:
-    data = dict(id=USER_ID, name="Ben", email="ben@gmail.com", image=None, is_admin=False)
+    data = dict(id=USER_ID, name="Ben", email="ben@gmail.com", image=None, role="user")
     data.update(overrides)
     return SimpleNamespace(**data)
 

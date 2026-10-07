@@ -9,7 +9,7 @@ from fastapi import UploadFile, HTTPException
 from sqlalchemy import insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.model import MenuItem
+from db.model import MenuItem, Restaurant
 from src.service.basic.basic_service import BasicService
 from src.vm.menu.menu_vm import MenuReqModel, MenuRespModel
 
@@ -21,12 +21,13 @@ class CRUDMenuService(BasicService):
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def add_menu(self, menu: MenuReqModel, file: UploadFile | None) -> dict:
+    async def add_menu(self, menu: MenuReqModel, file: UploadFile | None, owner_id: uuid.UUID | None = None) -> dict:
         """
         新增餐點功能
 
         :param menu: 新增的餐點資訊
         :param file: 上傳的餐點圖片檔案，若無則為 None。
+        :param owner_id: 業者 ID，傳入時僅能在自己名下的餐廳新增；None 代表不限制(超級管理員)
         :return: 回傳新增成功訊息與新增後的餐點資料（含 id、section 預設值、建立/更新時間）
         """
         # section 為 None 時略過，交由資料庫自己填入「未分類」
@@ -39,7 +40,7 @@ class CRUDMenuService(BasicService):
             add_data["image"] = file_name
 
         existed_restaurant = await self._check_if_existed_restaurant(self._session, menu.restaurant_id)
-        if not existed_restaurant:
+        if not existed_restaurant or not await self._check_restaurant_scope(menu.restaurant_id, owner_id):
             raise Missing(msg="餐廳不存在")
 
         duplicated = await self._check_if_duplicated_menu(menu.restaurant_id, menu.name)
@@ -59,7 +60,8 @@ class CRUDMenuService(BasicService):
     async def update_menu(self,
                           menu_item_id: uuid.UUID,
                           menu: MenuReqModel,
-                          file: UploadFile | None
+                          file: UploadFile | None,
+                          owner_id: uuid.UUID | None = None
                           ) -> dict:
         """
         編輯餐點功能
@@ -67,6 +69,7 @@ class CRUDMenuService(BasicService):
         :param menu_item_id: 欲修改的餐點 ID
         :param menu: 欲修改的餐點內容
         :param file: 上傳的餐點圖片檔案，若無則為 None。
+        :param owner_id: 業者 ID，傳入時僅能編輯自己名下餐廳的餐點；None 代表不限制(超級管理員)
         :return: 回傳編輯成功訊息與編輯後的餐點資料
         """
         # 傳 None 的欄位不覆寫既有值
@@ -79,7 +82,11 @@ class CRUDMenuService(BasicService):
             update_data["image"] = file_name
 
         existed = await self._check_if_existed_menu_item(self._session, menu_item_id)
-        if not existed:
+        if (
+                not existed
+                or not await self._check_menu_item_scope(menu_item_id, owner_id)
+                or not await self._check_restaurant_scope(menu.restaurant_id, owner_id)
+        ):
             raise Missing(msg="餐點不存在")
 
         stmt = (
@@ -97,16 +104,17 @@ class CRUDMenuService(BasicService):
             "data": MenuRespModel.model_validate(updated)
         }
 
-    async def delete_menu(self, menu_item_id_list: list[uuid.UUID]) -> dict:
+    async def delete_menu(self, menu_item_id_list: list[uuid.UUID], owner_id: uuid.UUID | None = None) -> dict:
         """
         刪除餐點功能
 
         :param menu_item_id_list: 欲刪除的餐點 ID 清單
+        :param owner_id: 業者 ID，傳入時僅能刪除自己名下餐廳的餐點；None 代表不限制(超級管理員)
         :return: 回傳刪除成功訊息與已刪除的餐點資料清單
         """
         for menu_item_id in menu_item_id_list:
             existed = await self._check_if_existed_menu_item(self._session, menu_item_id)
-            if not existed:
+            if not existed or not await self._check_menu_item_scope(menu_item_id, owner_id):
                 raise Missing(msg=f"餐點 {menu_item_id} 不存在，取消所有刪除，請確認。")
 
         stmt = delete(MenuItem).where(MenuItem.id.in_(menu_item_id_list)).returning(MenuItem)
@@ -118,6 +126,44 @@ class CRUDMenuService(BasicService):
             "message": "餐點刪除成功!",
             "data": [MenuRespModel.model_validate(item) for item in deleted]
         }
+
+    async def _check_restaurant_scope(self, restaurant_id: uuid.UUID, owner_id: uuid.UUID | None) -> bool:
+        """
+        檢查餐廳是否屬於該業者
+
+        :param restaurant_id: 餐廳 ID
+        :param owner_id: 業者 ID，None 代表不限制
+        :return: 是否在可操作範圍內
+        """
+        if not owner_id:
+            return True
+        stmt = (
+            select(Restaurant.id)
+            .where(Restaurant.id == restaurant_id)
+            .where(Restaurant.owner_id == owner_id)
+        )
+        result = await self._session.execute(stmt)
+        return result.scalar_one_or_none() is not None
+
+    async def _check_menu_item_scope(self, menu_item_id: uuid.UUID, owner_id: uuid.UUID | None) -> bool:
+        """
+        檢查餐點所屬餐廳是否屬於該業者
+
+        :param menu_item_id: 餐點 ID
+        :param owner_id: 業者 ID，None 代表不限制
+        :return: 是否在可操作範圍內
+        """
+        if not owner_id:
+            return True
+        stmt = (
+            select(MenuItem.id)
+            .select_from(MenuItem)
+            .join(Restaurant, Restaurant.id == MenuItem.restaurant_id)
+            .where(MenuItem.id == menu_item_id)
+            .where(Restaurant.owner_id == owner_id)
+        )
+        result = await self._session.execute(stmt)
+        return result.scalar_one_or_none() is not None
 
     async def _check_if_duplicated_menu(self, restaurant_id: uuid.UUID, name: str) -> bool:
         """

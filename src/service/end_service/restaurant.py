@@ -1,3 +1,5 @@
+import uuid
+
 from custom_select.select import select
 from sqlalchemy import func
 
@@ -13,11 +15,19 @@ class GetRestaurant:
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def get_all_restaurant(self, params: EndRestaurantGetReqModel) -> tuple[list[EndRestaurantRespModel], int]:
+    async def get_all_restaurant(
+            self,
+            params: EndRestaurantGetReqModel,
+            owner_id: uuid.UUID | None = None
+    ) -> tuple[list[EndRestaurantRespModel], int]:
+        """
+        :param owner_id: 業者 ID，傳入時僅查詢該業者名下的餐廳；None 代表不限制(超級管理員)
+        """
         stmt = (
             select(Restaurant, Category.name.label("category_name"), func.count(Restaurant.id).over().label("total"))
             .select_from(Restaurant)
             .outerjoin(Category, Restaurant.category_id == Category.id)
+            .where_if(owner_id, lambda: Restaurant.owner_id == owner_id)
             .where_if(params.name, lambda: Restaurant.name.ilike(f"%{params.name}%"))
             .where_if(params.category_name, lambda: Category.name.ilike(f"%{params.category_name}%"))
             .where_if(params.tel, lambda: Restaurant.tel.ilike(f"%{params.tel}%"))

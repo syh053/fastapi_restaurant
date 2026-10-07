@@ -46,7 +46,7 @@ class TestGetUser:
             email="ben@gmail.com",
             password="123",
             image="abc.png",
-            is_admin=False
+            role="user"
         )
         service._get_user_from_db = AsyncMock(return_value=fake_db_user)
 
@@ -72,7 +72,7 @@ class TestGetUser:
         assert data == {
             "user_id": str(fake_db_user.id),
             "user_name": fake_db_user.name,
-            "role": fake_db_user.is_admin,
+            "role": fake_db_user.role,
         }
         assert expires == 60 * 60 * 6
 
@@ -105,7 +105,7 @@ class TestGetUser:
             email="ben@gmail.com",
             password="123",
             image="abc.png",
-            is_admin=False
+            role="user"
         )
 
         service._get_user_from_db = AsyncMock(return_value=fake_db_user)

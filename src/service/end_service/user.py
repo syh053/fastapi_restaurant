@@ -1,11 +1,13 @@
 import uuid
 
 from custom_select.select import select
+from fastapi import HTTPException
 from database_errors.errors import Missing
 from sqlalchemy import func, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.model import User
+from db.model.enums import UserRole
 from src.vm.end.user_vm import EndUserGetReqModel, EndUserRespModel, EndUserUpdateReqModel
 
 
@@ -19,7 +21,7 @@ class UserCrud:
             .select_from(User)
             .where_if(params.name, lambda: User.name.ilike(f"%{params.name}%"))
             .where_if(params.email, lambda: User.email.ilike(f"%{params.email}%"))
-            .where_if(params.is_admin is not None, lambda: User.is_admin == params.is_admin)
+            .where_if(params.role, lambda: User.role == params.role)
             .offset((params.current_page - 1) * params.page_size)
             .limit(params.page_size)
         )
@@ -37,7 +39,13 @@ class UserCrud:
 
         return datas, total
 
-    async def update_user_access(self, params: EndUserUpdateReqModel) -> None:
+    async def update_user_access(self, params: EndUserUpdateReqModel, current_user_id: uuid.UUID | None = None) -> None:
+        """
+        變更使用者角色(超級管理員不可變更自己的角色，避免失去後台權限)
+        """
+        if current_user_id and params.id == current_user_id and params.role != UserRole.SUPER_ADMIN:
+            raise HTTPException(status_code=400, detail="不可變更自己的超級管理員角色")
+
         exist_check = await self._check_if_existed_user(params.id)
 
         if exist_check:

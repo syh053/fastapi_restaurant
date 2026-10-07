@@ -5,10 +5,10 @@ from jose import jwt, JWTError, ExpiredSignatureError
 from db.model.database import db_config
 
 
-def create_access_token(user_id: str, is_admin: bool) -> str:
+def create_access_token(user_id: str, role: str) -> str:
     payload = {
         "sub": user_id,
-        "role": is_admin,
+        "role": role,
         "exp": datetime.now(tz=timezone.utc) + timedelta(days=1)
     }
     return jwt.encode(payload, db_config["SECRET"]["secret_key"], algorithm=db_config["SECRET"]["algorithm"])

@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
-from src.dependencies.auth import require_admin
+from src.dependencies.auth import require_admin, get_current_user
 from src.service.end_service.user import UserCrud
 from src.tool.service_tool import get_service
 from src.vm.end.user_vm import EndUserGetReqModel, EndUserUpdateReqModel
@@ -28,8 +28,9 @@ async def get_user(
 async def update_user_access(
         service: END_USER_SERVICE,
         params: EndUserUpdateReqModel,
+        user: Annotated[dict, Depends(get_current_user)],
 ):
-    return await service.update_user_access(params=params)
+    return await service.update_user_access(params=params, current_user_id=uuid.UUID(user["user_id"]))
 
 @END_USER_ROUTER.delete("", summary="使用者刪除")
 async def delete_user(

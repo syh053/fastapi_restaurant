@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
 
 import pytest
+from fastapi import HTTPException
 from database_errors.errors import Missing
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,7 +14,7 @@ USER_ID = UUID("11111111-1111-1111-1111-111111111111")
 
 
 def _user(**overrides) -> SimpleNamespace:
-    data = dict(id=USER_ID, name="Ben", email="ben@gmail.com", is_admin=False)
+    data = dict(id=USER_ID, name="Ben", email="ben@gmail.com", role="user")
     data.update(overrides)
     return SimpleNamespace(**data)
 
@@ -60,7 +61,7 @@ class TestUserCrud:
         execute_result.all.return_value = [(_user(), 1)]
         mock_session.execute.return_value = execute_result
 
-        params = EndUserGetReqModel(name="Ben", email="ben", is_admin=False, current_page=1, page_size=10)
+        params = EndUserGetReqModel(name="Ben", email="ben", role="user", current_page=1, page_size=10)
         await service.get_users(params)
 
         mock_session.execute.assert_awaited_once()
@@ -69,7 +70,7 @@ class TestUserCrud:
 
     async def test_update_user_access(self, service: UserCrud):
         service._check_if_existed_user = AsyncMock(return_value=True)
-        params = EndUserUpdateReqModel(id=USER_ID, is_admin=True)
+        params = EndUserUpdateReqModel(id=USER_ID, role="owner")
 
         await service.update_user_access(params)
 
@@ -78,11 +79,20 @@ class TestUserCrud:
 
     async def test_update_user_access_missing(self, service: UserCrud):
         service._check_if_existed_user = AsyncMock(return_value=False)
-        params = EndUserUpdateReqModel(id=USER_ID, is_admin=True)
+        params = EndUserUpdateReqModel(id=USER_ID, role="owner")
 
         with pytest.raises(Missing):
             await service.update_user_access(params)
 
+        service._session.execute.assert_not_awaited()  # type: ignore
+
+    async def test_update_user_access_cannot_demote_self(self, service: UserCrud):
+        params = EndUserUpdateReqModel(id=USER_ID, role="user")
+
+        with pytest.raises(HTTPException) as exc_info:
+            await service.update_user_access(params, current_user_id=USER_ID)
+
+        assert exc_info.value.status_code == 400
         service._session.execute.assert_not_awaited()  # type: ignore
 
     # --- delete_user ---

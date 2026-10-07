@@ -7,6 +7,7 @@ from sqlalchemy.orm import mapped_column, Mapped
 
 from db.model.category import Category
 from db.model.config import SCHEMA
+from db.model.user import User
 
 
 class Restaurant(BaseModel):
@@ -24,6 +25,13 @@ class Restaurant(BaseModel):
         ForeignKey(Category.id, ondelete="SET NULL", onupdate="CASCADE"),
         nullable=True,
         comment="分類名稱"
+    )
+    owner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey(User.id, ondelete="SET NULL", onupdate="CASCADE"),
+        nullable=True,
+        index=True,
+        comment="業者(擁有者) ID"
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

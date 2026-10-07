@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import Body
@@ -10,6 +10,7 @@ class UserAddReq(BaseModel):
     email: Annotated[str, Body(max_length=256, description='email')]
     password: Annotated[str, Body(max_length=128, description='使用者密碼')]
     confirm_password: Annotated[str, Body(max_length=128, description='確認使用者密碼')]
+    role: Annotated[Literal["user", "owner"], Body(description='註冊角色:user 一般使用者 / owner 業者')] = "user"
 
 
 class UserGetReqModel(BaseModel):
@@ -23,6 +24,6 @@ class UserGetRespModel(BaseModel):
     email: Annotated[str, Field(max_length=256, description='email')]
     image: Annotated[str | None, Field(default=None, description='使用者大頭貼')]
     password: Annotated[str, Body(description='密碼')]
-    is_admin: Annotated[bool, Body(description='是否為管理員')]
+    role: Annotated[str, Body(description='角色')]
 
     model_config = ConfigDict(from_attributes=True)

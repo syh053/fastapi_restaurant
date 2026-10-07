@@ -21,15 +21,22 @@ class CRUDRestaurant:
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def add_restaurant(self, restaurant: EndRestaurantReqModel, file: UploadFile | None) -> None:
+    async def add_restaurant(
+            self,
+            restaurant: EndRestaurantReqModel,
+            file: UploadFile | None,
+            owner_id: uuid.UUID | None = None
+    ) -> None:
         """
         新增餐廳功能
 
         :param restaurant: 新增的餐廳資訊
         :param file: 上傳的餐廳圖片檔案，若無則為 None。
+        :param owner_id: 餐廳所屬業者 ID，None 代表無業者
         :return: 無
         """
         add_data = restaurant.model_dump()
+        add_data["owner_id"] = owner_id
 
         if not add_data["category_id"]:
             default_category_id = await self._get_default_category_id()
@@ -55,13 +62,15 @@ class CRUDRestaurant:
     async def update_restaurant(self,
                                 original_name: str,
                                 restaurant: EndRestaurantReqModel,
-                                file: UploadFile | None
+                                file: UploadFile | None,
+                                owner_id: uuid.UUID | None = None
                                 ) -> None:
         """
 
         :param original_name: 原來的餐廳名稱
         :param restaurant: 欲修改的餐廳內容
         :param file: 上傳的餐廳圖片檔案，若無則為 None。
+        :param owner_id: 業者 ID，傳入時僅能修改自己名下的餐廳；None 代表不限制(超級管理員)
         :return: 無
         """
 
@@ -73,7 +82,7 @@ class CRUDRestaurant:
             await self._save_file_to_folder(file=file)
             update_data["image"] = file_name
 
-        existed = await self._check_if_existed_restaurant(original_name)
+        existed = await self._check_if_existed_restaurant(original_name, owner_id)
 
         if existed:
             stmt = (
@@ -81,32 +90,38 @@ class CRUDRestaurant:
                 .values(**update_data)
                 .where(Restaurant.name == original_name)
             )
+            if owner_id:
+                stmt = stmt.where(Restaurant.owner_id == owner_id)
 
             await self._session.execute(stmt)
         else:
             raise Missing(msg="餐廳不存在")
 
-    async def delete_restaurant(self, restaurant_name_list: list[str]) -> None:
+    async def delete_restaurant(self, restaurant_name_list: list[str], owner_id: uuid.UUID | None = None) -> None:
         """
 
         :param restaurant_name_list: 欲刪除的餐廳名稱
         :type restaurant_name_list: list[str]
+        :param owner_id: 業者 ID，傳入時僅能刪除自己名下的餐廳；None 代表不限制(超級管理員)
         :return: 無
         """
         for name in restaurant_name_list:
-            existed = await self._check_if_existed_restaurant(name)
+            existed = await self._check_if_existed_restaurant(name, owner_id)
             if not existed:
                 raise Missing(msg=f"餐廳 {name} 不存在，取消所有刪除，請確認。")
 
         stmt = delete(Restaurant).where(Restaurant.name.in_(restaurant_name_list))
+        if owner_id:
+            stmt = stmt.where(Restaurant.owner_id == owner_id)
 
         await self._session.execute(stmt)
 
-    async def _check_if_existed_restaurant(self, name: str) -> bool:
+    async def _check_if_existed_restaurant(self, name: str, owner_id: uuid.UUID | None = None) -> bool:
         stmt = (
             select(Restaurant.name)
             .select_from(Restaurant)
             .where(Restaurant.name == name)
+            .where_if(owner_id, lambda: Restaurant.owner_id == owner_id)
         )
 
         result = await self._session.execute(stmt)

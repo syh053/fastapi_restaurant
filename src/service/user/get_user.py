@@ -45,7 +45,7 @@ class GetUser:
                 {
                     "user_id": str(db_user.id),
                     "user_name": str(db_user.name),
-                    "role": db_user.is_admin
+                    "role": db_user.role
                 },
                 expires=60 * 60 * 6,
             )
